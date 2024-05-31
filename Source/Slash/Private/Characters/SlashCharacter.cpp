@@ -14,6 +14,7 @@
 #include "Items/Weapons/Weapon.h"
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimInstance.h"
+#include "Components/BoxComponent.h"
 
 ASlashCharacter::ASlashCharacter()
 {
@@ -52,6 +53,15 @@ void ASlashCharacter::BeginPlay()
 void ASlashCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+}
+
+void ASlashCharacter::SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
+{
+    if (EquippedWeapon && EquippedWeapon->GetWeaponBox())
+    {
+        EquippedWeapon->GetWeaponBox()->SetCollisionEnabled(CollisionEnabled);
+        EquippedWeapon->IgnoredActors.Empty();
+    }
 }
 
 void ASlashCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -182,7 +192,7 @@ void ASlashCharacter::PlayAttackMontage()
     }
 }
 
-void ASlashCharacter::PlayEquipMontage(FName SectionName)
+void ASlashCharacter::PlayEquipMontage(const FName& SectionName)
 {
     UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
     if (AnimInstance && EquipMontage)

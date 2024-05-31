@@ -25,13 +25,15 @@ class SLASH_API ASlashCharacter : public ACharacter
 public:
     ASlashCharacter();
 
-protected:
-    virtual void BeginPlay() override;
-
-public:
     virtual void Tick(float DeltaTime) override;
 
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+
+    UFUNCTION(BlueprintCallable)
+    void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
+
+protected:
+    virtual void BeginPlay() override;
 
 protected:
     UPROPERTY(EditAnywhere, Category = "Input")
@@ -69,7 +71,7 @@ protected:
      */
 
     void PlayAttackMontage();
-    void PlayEquipMontage(FName SectionName);
+    void PlayEquipMontage(const FName& SectionName);
 
     bool CanAttack() const;
     bool CanDisarm() const;
