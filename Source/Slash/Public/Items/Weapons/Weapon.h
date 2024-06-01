@@ -47,6 +47,9 @@ protected:
         bool bFromSweep,                                         //
         const FHitResult& SweepResult);
 
+    UFUNCTION(BlueprintImplementableEvent)
+    void CreateFields(const FVector& FieldLocation);
+
 private:
     UPROPERTY(EditAnywhere, Category = "Weapon properties")
     USoundBase* EquipSound;
