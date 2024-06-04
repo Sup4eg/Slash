@@ -5,6 +5,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/Engine.h"
 #include "Characters/SlashCharacter.h"
+#include "NiagaraComponent.h"
 
 AItem::AItem()
 {
@@ -15,6 +16,9 @@ AItem::AItem()
 
     Sphere = CreateDefaultSubobject<USphereComponent>("Sphere");
     Sphere->SetupAttachment(Mesh);
+
+    EmbersEffect = CreateDefaultSubobject<UNiagaraComponent>("Embers");
+    EmbersEffect->SetupAttachment(GetRootComponent());
 }
 
 void AItem::BeginPlay()
@@ -64,5 +68,4 @@ void AItem::Tick(float DeltaTime)
     {
         AddActorWorldOffset(FVector(0.f, 0.f, TransformedSin()));
     }
-    
 }

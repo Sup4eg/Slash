@@ -183,9 +183,9 @@ void ASlashCharacter::PlayAttackMontage()
         FName SectionName = FName();
         switch (Selection)
         {
-            case 0: SectionName = "Attack1"; break;
+            case 0: SectionName = "Attack2"; break;
             case 1: SectionName = "Attack2"; break;
-            case 2: SectionName = "Attack3"; break;
+            case 2: SectionName = "Attack2"; break;
             default: break;
         }
         AnimInstance->Montage_JumpToSection(SectionName, AttackMontage);

@@ -8,6 +8,7 @@
 
 class USphereComponent;
 class UStaticMeshComponent;
+class UNiagaraComponent;
 
 enum class EItemState : uint8
 {
@@ -49,6 +50,9 @@ protected:
     USphereComponent* Sphere;
 
     EItemState ItemState = EItemState::EIS_Hovering;
+
+    UPROPERTY(EditAnywhere, Category = "VFX")
+    UNiagaraComponent* EmbersEffect;
 
 private:
     UPROPERTY(EditAnywhere, Category = "Sine Parameters")

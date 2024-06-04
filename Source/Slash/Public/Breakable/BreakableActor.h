@@ -8,6 +8,9 @@
 #include "BreakableActor.generated.h"
 
 class UGeometryCollectionComponent;
+class ATreasure;
+class UCapsuleComponent;
+class USoundBase;
 
 UCLASS()
 class SLASH_API ABreakableActor : public AActor, public IHitInterface
@@ -25,4 +28,28 @@ protected:
 private:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     UGeometryCollectionComponent* GeometryCollection;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+    UCapsuleComponent* CapsuleComponent;
+
+    UPROPERTY(EditAnywhere, Category = "Breakable Properties")
+    TArray<TSubclassOf<ATreasure>> TreasureClassess;
+
+    UPROPERTY(EditAnywhere, Category = "Breakable Properties")
+    USoundBase* BreakSound;
+
+    UPROPERTY(EditAnywhere, Category = "Breakable Properties")
+    float TreasureSpawnHeight = 75.f;
+
+    UPROPERTY(EditAnywhere, Category = "Breakable Properties")
+    int32 LifeSpan = 3.f;
+
+    bool bBroken = false;
+
+    UFUNCTION()
+    void OnChaousBreak(const FChaosBreakEvent& BreakEvent);
+
+    void OnBreak(const FVector& ImpactPoint);
+
+    void SpawnTreasure();
 };
