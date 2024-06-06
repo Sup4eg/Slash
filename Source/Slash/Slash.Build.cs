@@ -8,7 +8,7 @@ public class Slash : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.NoSharedPCHs;
 
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "HairStrandsCore", "Niagara", "GeometryCollectionEngine" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "HairStrandsCore", "Niagara", "GeometryCollectionEngine", "UMG" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 
@@ -19,7 +19,9 @@ public class Slash : ModuleRules
 			"Slash/Public/Enemy",
 			"Slash/Public/Interfaces",
 			"Slash/Public/Breakable",
-			"Slash/Public/Pawns"
+			"Slash/Public/Pawns",
+			"Slash/Public/Components",
+			"Slash/Public/HUD"
 		});
 
 		// Uncomment if you are using Slate UI

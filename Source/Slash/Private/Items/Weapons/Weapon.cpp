@@ -11,6 +11,7 @@
 #include "Kismet/KismetSystemLibrary.h"
 #include "Interfaces/HitInterface.h"
 #include "NiagaraComponent.h"
+#include "GameFramework/DamageType.h"
 
 AWeapon::AWeapon()
 {
@@ -85,6 +86,8 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent,  //
     );
     if (OutBoxHit.GetActor())
     {
+        UGameplayStatics::ApplyDamage(OutBoxHit.GetActor(), Damage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
+
         IHitInterface* HitInterface = Cast<IHitInterface>(OutBoxHit.GetActor());
         if (HitInterface)
         {
@@ -95,8 +98,11 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent,  //
     }
 }
 
-void AWeapon::Equip(USceneComponent* InParent, FName InSocketName)
+void AWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
 {
+    SetOwner(NewOwner);
+    SetInstigator(NewInstigator);
+
     AttachMeshToSocket(InParent, InSocketName);
     if (EquipSound)
     {
