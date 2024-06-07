@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Items/Item.h"
+#include "Items/Weapons/WeaponTypes.h"
 #include "Weapon.generated.h"
 
 class USceneComponent;
@@ -23,6 +24,12 @@ public:
     void AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName);
 
     TArray<AActor*> IgnoredActors;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon properties")
+    FName ArmSocketName = "OneHandedRightArmSocket";
+
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon properties")
+    FName SpineSocketName = "OneHandedSpineSocket";
 
 protected:
     virtual void BeginPlay() override;
@@ -66,6 +73,10 @@ private:
     UPROPERTY(EditAnywhere, Category = "Weapon properties")
     float Damage = 20.f;
 
+    UPROPERTY(EditDefaultsOnly, Category = "Weapon properties")
+    EWeaponType WeaponType = EWeaponType::EWT_OneHanded;
+
 public:
     FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }
+    FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
 };

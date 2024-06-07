@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "CharacterTypes.h"
+#include "WeaponTypes.h"
 #include "SlashCharacter.generated.h"
 
 class UInputMappingContext;
@@ -14,7 +15,6 @@ class UCameraComponent;
 class USpringArmComponent;
 class UGroomComponent;
 class AItem;
-class UAnimMontage;
 class AWeapon;
 
 UCLASS()
@@ -54,6 +54,12 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Input")
     UInputAction* AttackAction;
 
+    UPROPERTY(EditAnywhere, Category = "Input")
+    UInputAction* EquipOneHandedWeaponAction;
+
+    UPROPERTY(EditAnywhere, Category = "Input")
+    UInputAction* EquipTwoHandedWeaponAction;
+
     void SetUpInputMappingContext();
 
     /**
@@ -64,6 +70,9 @@ protected:
     void Look(const FInputActionValue& Value);
     void Jump();
     void EKeyPressed();
+    void NewFunction();
+    void Key1Pressed();
+    void Key2Pressed();
     void Attack();
 
     /**
@@ -111,16 +120,24 @@ private:
     AItem* OverlappingItem;
 
     UPROPERTY(VisibleAnywhere, Category = "Weapon")
-    AWeapon* EquippedWeapon;
+    AWeapon* LastEquippedWeapon;
 
-    /*
-        Animation montages
-    */
-    UPROPERTY(EditDefaultsOnly, Category = "Montages")
-    UAnimMontage* AttackMontage;
+    UPROPERTY(VisibleAnywhere, Category = "Weapon")
+    TMap<EWeaponType, AWeapon*> EquippedWeapons;
+
+    // Montages
 
     UPROPERTY(EditDefaultsOnly, Category = "Montages")
-    UAnimMontage* EquipMontage;
+    TMap<EWeaponType, UAnimMontage*> WeaponTypeToEquipMontages;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Montages")
+    TMap<EWeaponType, UAnimMontage*> WeaponTypeToAttackMontages;
+
+    ECharacterState GetCharacterStateByWeaponType(EWeaponType WeaponType) const;
+
+    void UnequipWeapon();
+
+    void EquipWeapon();
 
 public:
     FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
