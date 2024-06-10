@@ -56,7 +56,7 @@ void ABreakableActor::SpawnTreasure()
     if (TreasureClassess.IsEmpty()) return;
     FVector Location = GetActorLocation();
     Location.Z += TreasureSpawnHeight;
-    int32 TreasureIndex = FMath::RandRange(0, TreasureClassess.Num() - 1);
+    const int32 TreasureIndex = FMath::RandRange(0, TreasureClassess.Num() - 1);
     GetWorld()->SpawnActor<ATreasure>(TreasureClassess[TreasureIndex], Location, GetActorRotation());
 }
 

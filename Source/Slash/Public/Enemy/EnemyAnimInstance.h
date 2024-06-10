@@ -23,4 +23,7 @@ public:
 
     UPROPERTY(BlueprintReadOnly, Category = "Enemy state")
     EDeathPose DeathPose;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Enemy movement")
+    float GroundSpeed = 0.f;
 };

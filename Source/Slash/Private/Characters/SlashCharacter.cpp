@@ -15,6 +15,7 @@
 #include "Animation/AnimMontage.h"
 #include "Animation/AnimInstance.h"
 #include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 
 ASlashCharacter::ASlashCharacter()
 {
@@ -48,6 +49,7 @@ void ASlashCharacter::BeginPlay()
 {
     Super::BeginPlay();
     SetUpInputMappingContext();
+    Tags.Add("SlashCharacter");
 }
 
 void ASlashCharacter::Tick(float DeltaTime)
@@ -123,6 +125,12 @@ void ASlashCharacter::SetUpInputMappingContext()
 void ASlashCharacter::UnequipWeapon()
 {
     PlayEquipMontage("Unequip");
+    if (EquippedWeapons.Contains(LastEquippedWeapon->GetWeaponType()))
+    {
+        EquippedWeapons[LastEquippedWeapon->GetWeaponType()]->Destroy();
+    }
+    EquippedWeapons.Add(LastEquippedWeapon->GetWeaponType(), LastEquippedWeapon);
+
     CharacterState = ECharacterState::ECS_Unequipped;
     ActionState = EActionState::EAS_EquippingWeapon;
 }
@@ -145,7 +153,6 @@ void ASlashCharacter::EKeyPressed()
 
         OverlappingItem = nullptr;
         LastEquippedWeapon = OverlappingWeapon;
-        EquippedWeapons.Add(OverlappingWeapon->GetWeaponType(), OverlappingWeapon);
     }
     else if (CanDisarm())
     {
@@ -230,9 +237,9 @@ void ASlashCharacter::PlayAttackMontage()
     if (AnimInstance && AttackMontage)
     {
         AnimInstance->Montage_Play(AttackMontage);
-        int32 SectionNum = AttackMontage->CompositeSections.Num();
-        int32 RandomSectionIndex = FMath::RandRange(0, SectionNum - 1);
-        FName SectionName = AttackMontage->CompositeSections[RandomSectionIndex].SectionName;
+        const int32 SectionNum = AttackMontage->CompositeSections.Num();
+        const int32 RandomSectionIndex = FMath::RandRange(0, SectionNum - 1);
+        const FName SectionName = AttackMontage->CompositeSections[RandomSectionIndex].SectionName;
         AnimInstance->Montage_JumpToSection(SectionName);
     }
 }

@@ -15,6 +15,8 @@
 
 AWeapon::AWeapon()
 {
+    PrimaryActorTick.bCanEverTick = false;
+
     WeaponBox = CreateDefaultSubobject<UBoxComponent>("WeaponBox");
     WeaponBox->SetupAttachment(GetRootComponent());
     WeaponBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -22,9 +24,8 @@ AWeapon::AWeapon()
     WeaponBox->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Ignore);
 
     BoxTraceStart = CreateDefaultSubobject<USceneComponent>("BoxTraceStart");
-    BoxTraceStart->SetupAttachment(GetRootComponent());
-
     BoxTraceEnd = CreateDefaultSubobject<USceneComponent>("BoxTraceEnd");
+    BoxTraceStart->SetupAttachment(GetRootComponent());
     BoxTraceEnd->SetupAttachment(GetRootComponent());
 }
 
@@ -32,6 +33,34 @@ void AWeapon::BeginPlay()
 {
     Super::BeginPlay();
     WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
+}
+
+void AWeapon::Tick(float DeltaTime)
+{
+    Super::Tick(DeltaTime);
+
+    /*
+        Debug purposes
+    */
+
+    // const FVector Start = BoxTraceStart->GetComponentLocation();
+    // const FVector End = BoxTraceEnd->GetComponentLocation();
+
+    // TArray<AActor*> ActorsToIgnore;
+    // ActorsToIgnore.Add(this);
+    // FHitResult OutBoxHit;
+    // UKismetSystemLibrary::BoxTraceSingle(this,                                                   //
+    //     Start,                                                                                   //
+    //     End,                                                                                     //
+    //     FVector(WeaponBox->GetUnscaledBoxExtent().X, WeaponBox->GetUnscaledBoxExtent().Y, 5.f),  //
+    //     BoxTraceStart->GetComponentRotation(),                                                   //
+    //     ETraceTypeQuery::TraceTypeQuery1,                                                        //
+    //     false,                                                                                   //
+    //     ActorsToIgnore,                                                                          //
+    //     EDrawDebugTrace::ForOneFrame,                                                            //
+    //     OutBoxHit,                                                                               //
+    //     true                                                                                     //
+    // );
 }
 
 void AWeapon::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent,  //
@@ -57,8 +86,9 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent,  //
     UPrimitiveComponent* OtherComp,                                   //
     int32 OtherBodyIndex,                                             //
     bool bFromSweep,                                                  //
-    const FHitResult& SweepResult)
+    const FHitResult& SweepResult)                                    //
 {
+
     const FVector Start = BoxTraceStart->GetComponentLocation();
     const FVector End = BoxTraceEnd->GetComponentLocation();
 
@@ -72,17 +102,17 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent,  //
 
     FHitResult OutBoxHit;
 
-    UKismetSystemLibrary::BoxTraceSingle(this,  //
-        Start,                                  //
-        End,                                    //
-        FVector(5.f, 5.f, 5.f),                 //
-        BoxTraceStart->GetComponentRotation(),  //
-        ETraceTypeQuery::TraceTypeQuery1,       //
-        false,                                  //
-        ActorsToIgnore,                         //
-        EDrawDebugTrace::None,                  //
-        OutBoxHit,                              //
-        true                                    //
+    UKismetSystemLibrary::BoxTraceSingle(this,                                                   //
+        Start,                                                                                   //
+        End,                                                                                     //
+        FVector(WeaponBox->GetUnscaledBoxExtent().X, WeaponBox->GetUnscaledBoxExtent().Y, 5.f),  //
+        BoxTraceStart->GetComponentRotation(),                                                   //
+        ETraceTypeQuery::TraceTypeQuery1,                                                        //
+        false,                                                                                   //
+        ActorsToIgnore,                                                                          //
+        EDrawDebugTrace::None,                                                                   //
+        OutBoxHit,                                                                               //
+        true                                                                                     //
     );
     if (OutBoxHit.GetActor())
     {

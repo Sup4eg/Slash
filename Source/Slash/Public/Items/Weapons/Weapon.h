@@ -7,17 +7,19 @@
 #include "Items/Weapons/WeaponTypes.h"
 #include "Weapon.generated.h"
 
+class UBoxComponent;
 class USceneComponent;
 class USoundBase;
-class UBoxComponent;
 
-UCLASS()
+UCLASS(ClassGroup = (Custom))
 class SLASH_API AWeapon : public AItem
 {
     GENERATED_BODY()
 
 public:
     AWeapon();
+
+    virtual void Tick(float DeltaTime) override;
 
     void Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator);
 
@@ -58,25 +60,25 @@ protected:
     void CreateFields(const FVector& FieldLocation);
 
 private:
-    UPROPERTY(EditAnywhere, Category = "Weapon properties")
+    UPROPERTY(VisibleAnywhere, Category = "Weapon data")
     USoundBase* EquipSound;
 
-    UPROPERTY(VisibleAnywhere, Category = "Weapon properties")
+    UPROPERTY(VisibleAnywhere, Category = "Weapon data")
     UBoxComponent* WeaponBox;
 
-    UPROPERTY(VisibleAnywhere)
+    UPROPERTY(EditAnywhere, Category = "Weapon data")
+    float Damage = 20.f;
+
+    UPROPERTY(EditAnywhere, Category = "Weapon data")
     USceneComponent* BoxTraceStart;
 
-    UPROPERTY(VisibleAnywhere)
+    UPROPERTY(EditAnywhere, Category = "Weapon data")
     USceneComponent* BoxTraceEnd;
-
-    UPROPERTY(EditAnywhere, Category = "Weapon properties")
-    float Damage = 20.f;
 
     UPROPERTY(EditDefaultsOnly, Category = "Weapon properties")
     EWeaponType WeaponType = EWeaponType::EWT_OneHanded;
 
 public:
-    FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }
     FORCEINLINE EWeaponType GetWeaponType() const { return WeaponType; }
+    FORCEINLINE UBoxComponent* GetWeaponBox() const { return WeaponBox; }
 };
