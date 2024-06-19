@@ -18,11 +18,14 @@ public:
 
     virtual void NativeThreadSafeUpdateAnimation(float DeltaSeconds);
 
-    UPROPERTY(BlueprintReadOnly)
+    UPROPERTY(BlueprintReadWrite)
     AEnemy* Enemy;
 
     UPROPERTY(BlueprintReadOnly, Category = "Enemy state")
-    EDeathPose DeathPose;
+    TEnumAsByte<EDeathPose> DeathPose;
+
+    UPROPERTY(BlueprintReadOnly, Category = "Enemy state")
+    EEnemyState EnemyState = EEnemyState::EES_NoState;
 
     UPROPERTY(BlueprintReadOnly, Category = "Enemy movement")
     float GroundSpeed = 0.f;

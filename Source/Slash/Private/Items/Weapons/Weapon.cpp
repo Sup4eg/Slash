@@ -1,17 +1,18 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+#include "DrawDebugHelpers.h"
 #include "Items/Weapons/Weapon.h"
 #include "Characters/SlashCharacter.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "Sound/SoundBase.h"
-#include "Kismet/GameplayStatics.h"
 #include "Components/BoxComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "Interfaces/HitInterface.h"
 #include "NiagaraComponent.h"
-#include "GameFramework/DamageType.h"
+#include "Kismet/GameplayStatics.h"
+#include "Weapon.h"
 
 AWeapon::AWeapon()
 {
@@ -29,12 +30,6 @@ AWeapon::AWeapon()
     BoxTraceEnd->SetupAttachment(GetRootComponent());
 }
 
-void AWeapon::BeginPlay()
-{
-    Super::BeginPlay();
-    WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
-}
-
 void AWeapon::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
@@ -49,36 +44,41 @@ void AWeapon::Tick(float DeltaTime)
     // TArray<AActor*> ActorsToIgnore;
     // ActorsToIgnore.Add(this);
     // FHitResult OutBoxHit;
-    // UKismetSystemLibrary::BoxTraceSingle(this,                                                   //
-    //     Start,                                                                                   //
-    //     End,                                                                                     //
-    //     FVector(WeaponBox->GetUnscaledBoxExtent().X, WeaponBox->GetUnscaledBoxExtent().Y, 5.f),  //
-    //     BoxTraceStart->GetComponentRotation(),                                                   //
-    //     ETraceTypeQuery::TraceTypeQuery1,                                                        //
-    //     false,                                                                                   //
-    //     ActorsToIgnore,                                                                          //
-    //     EDrawDebugTrace::ForOneFrame,                                                            //
-    //     OutBoxHit,                                                                               //
-    //     true                                                                                     //
+    // UKismetSystemLibrary::BoxTraceSingle(this,  //
+    //     Start,                                  //
+    //     End,                                    //
+    //     FVector(BoxTraceCoord),                 //
+    //     BoxTraceStart->GetComponentRotation(),  //
+    //     ETraceTypeQuery::TraceTypeQuery1,       //
+    //     false,                                  //
+    //     ActorsToIgnore,                         //
+    //     EDrawDebugTrace::ForOneFrame,           //
+    //     OutBoxHit,                              //
+    //     true                                    //
     // );
 }
 
-void AWeapon::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent,  //
-    AActor* OtherActor,                                                       //
-    UPrimitiveComponent* OtherComp,                                           //
-    int32 OtherBodyIndex,                                                     //
-    bool bFromSweep,                                                          //
-    const FHitResult& SweepResult)
+void AWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
 {
-    Super::OnSphereBeginOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+    ItemState = EItemState::EIS_Equiped;
+    SetOwner(NewOwner);
+    SetInstigator(NewInstigator);
+    AttachMeshToSocket(InParent, InSocketName);
+    DisableSphereCollision();
+
+    PlayEquipSound();
+    DeactivateEmbers();
 }
 
-void AWeapon::OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent,  //
-    AActor* OtherActor,                                                     //
-    UPrimitiveComponent* OtherComp,                                         //
-    int32 OtherBodyIndex)
+void AWeapon::AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName)
 {
-    Super::OnSphereEndOverlap(OverlappedComponent, OtherActor, OtherComp, OtherBodyIndex);
+    Mesh->AttachToComponent(InParent, FAttachmentTransformRules::SnapToTargetIncludingScale, InSocketName);
+}
+
+void AWeapon::BeginPlay()
+{
+    Super::BeginPlay();
+    WeaponBox->OnComponentBeginOverlap.AddDynamic(this, &AWeapon::OnBoxOverlap);
 }
 
 void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent,  //
@@ -89,67 +89,80 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent,  //
     const FHitResult& SweepResult)                                    //
 {
 
-    const FVector Start = BoxTraceStart->GetComponentLocation();
-    const FVector End = BoxTraceEnd->GetComponentLocation();
-
-    TArray<AActor*> ActorsToIgnore;
-    IgnoredActors.Add(this);
-
-    for (AActor* Actor : IgnoredActors)
-    {
-        ActorsToIgnore.AddUnique(Actor);
-    }
-
+    if (IsActorSameType(OtherActor)) return;
     FHitResult OutBoxHit;
+    BoxTrace(OutBoxHit);
 
-    UKismetSystemLibrary::BoxTraceSingle(this,                                                   //
-        Start,                                                                                   //
-        End,                                                                                     //
-        FVector(WeaponBox->GetUnscaledBoxExtent().X, WeaponBox->GetUnscaledBoxExtent().Y, 5.f),  //
-        BoxTraceStart->GetComponentRotation(),                                                   //
-        ETraceTypeQuery::TraceTypeQuery1,                                                        //
-        false,                                                                                   //
-        ActorsToIgnore,                                                                          //
-        EDrawDebugTrace::None,                                                                   //
-        OutBoxHit,                                                                               //
-        true                                                                                     //
-    );
-    if (OutBoxHit.GetActor())
+    if (OutBoxHit.GetActor() && !IsActorSameType(OutBoxHit.GetActor()) && GetInstigator())
     {
-        UGameplayStatics::ApplyDamage(OutBoxHit.GetActor(), Damage, GetInstigator()->GetController(), this, UDamageType::StaticClass());
-
-        IHitInterface* HitInterface = Cast<IHitInterface>(OutBoxHit.GetActor());
-        if (HitInterface)
-        {
-            HitInterface->Execute_GetHit(OutBoxHit.GetActor(), OutBoxHit.ImpactPoint);
-        }
-        IgnoredActors.AddUnique(OutBoxHit.GetActor());
+        ExecuteSendHit(OutBoxHit, GetInstigator());
         CreateFields(OutBoxHit.ImpactPoint);
     }
 }
 
-void AWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
+void AWeapon::PlayEquipSound()
 {
-    SetOwner(NewOwner);
-    SetInstigator(NewInstigator);
-
-    AttachMeshToSocket(InParent, InSocketName);
     if (EquipSound)
     {
         UGameplayStatics::PlaySoundAtLocation(this, EquipSound, GetActorLocation());
     }
+}
+
+void AWeapon::DisableSphereCollision()
+{
     if (Sphere)
     {
         Sphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     }
+}
+
+void AWeapon::DeactivateEmbers()
+{
     if (EmbersEffect)
     {
         EmbersEffect->Deactivate();
     }
 }
 
-void AWeapon::AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName)
+void AWeapon::BoxTrace(FHitResult& OutBoxHit)
 {
-    Mesh->AttachToComponent(InParent, FAttachmentTransformRules::SnapToTargetIncludingScale, InSocketName);
-    ItemState = EItemState::EIS_Equiped;
+    const FVector Start = BoxTraceStart->GetComponentLocation();
+    const FVector End = BoxTraceEnd->GetComponentLocation();
+
+    TArray<AActor*> ActorsToIgnore;
+    IgnoredActors.Add(this);
+    IgnoredActors.Add(GetOwner());
+
+    for (AActor* Actor : IgnoredActors)
+    {
+        ActorsToIgnore.AddUnique(Actor);
+    }
+
+    UKismetSystemLibrary::BoxTraceSingle(this,                                 //
+        Start,                                                                 //
+        End,                                                                   //
+        FVector(BoxTraceCoord),                                                //
+        BoxTraceStart->GetComponentRotation(),                                 //
+        ETraceTypeQuery::TraceTypeQuery1,                                      //
+        false,                                                                 //
+        ActorsToIgnore,                                                        //
+        bShowBoxDebug ? EDrawDebugTrace::ForDuration : EDrawDebugTrace::None,  //
+        OutBoxHit,                                                             //
+        true                                                                   //
+    );
+    IgnoredActors.AddUnique(OutBoxHit.GetActor());
+}
+
+void AWeapon::ExecuteSendHit(FHitResult& OutBoxHit, AActor* InstigatorActor)
+{
+    IHitInterface* HitInterface = Cast<IHitInterface>(InstigatorActor);
+    if (HitInterface)
+    {
+        HitInterface->Execute_SendHit(InstigatorActor, OutBoxHit.ImpactPoint, OutBoxHit.GetActor(), Damage, this);
+    }
+}
+
+bool AWeapon::IsActorSameType(AActor* OtherActor)
+{
+    return GetOwner()->ActorHasTag("Enemy") && OtherActor->ActorHasTag("Enemy");
 }

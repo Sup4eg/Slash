@@ -60,7 +60,7 @@ void ABreakableActor::SpawnTreasure()
     GetWorld()->SpawnActor<ATreasure>(TreasureClassess[TreasureIndex], Location, GetActorRotation());
 }
 
-void ABreakableActor::GetHit_Implementation(const FVector& ImpactPoint)
+void ABreakableActor::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 {
     OnBreak(ImpactPoint);
 }

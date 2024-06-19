@@ -25,28 +25,16 @@ public:
 
     void AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName);
 
-    TArray<AActor*> IgnoredActors;
-
     UPROPERTY(EditDefaultsOnly, Category = "Weapon properties")
     FName ArmSocketName = "OneHandedRightArmSocket";
 
     UPROPERTY(EditDefaultsOnly, Category = "Weapon properties")
     FName SpineSocketName = "OneHandedSpineSocket";
 
+    TArray<AActor*> IgnoredActors;
+
 protected:
     virtual void BeginPlay() override;
-
-    virtual void OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent,  //
-        AActor* OtherActor,                                                      //
-        UPrimitiveComponent* OtherComp,                                          //
-        int32 OtherBodyIndex,                                                    //
-        bool bFromSweep,                                                         //
-        const FHitResult& SweepResult) override;
-
-    virtual void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent,  //
-        AActor* OtherActor,                                                    //
-        UPrimitiveComponent* OtherComp,                                        //
-        int32 OtherBodyIndex) override;
 
     UFUNCTION()
     void OnBoxOverlap(UPrimitiveComponent* OverlappedComponent,  //
@@ -60,6 +48,24 @@ protected:
     void CreateFields(const FVector& FieldLocation);
 
 private:
+    void PlayEquipSound();
+
+    void DisableSphereCollision();
+
+    void DeactivateEmbers();
+
+    void BoxTrace(FHitResult& OutBoxHit);
+
+    void ExecuteSendHit(FHitResult& OutBoxHit, AActor* InstigatorActor);
+
+    bool IsActorSameType(AActor* OtherActor);
+
+    UPROPERTY(EditAnywhere, Category = "Weapon data")
+    FVector BoxTraceCoord = FVector(5.f, 5.f, 5.f);
+
+    UPROPERTY(EditAnywhere, Category = "Weapon data")
+    bool bShowBoxDebug = false;
+
     UPROPERTY(VisibleAnywhere, Category = "Weapon data")
     USoundBase* EquipSound;
 
