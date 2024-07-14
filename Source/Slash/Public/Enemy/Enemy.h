@@ -9,7 +9,7 @@
 
 class UHealthBarWidgetComponent;
 class AAIController;
-class UPawnSensingComponent;
+class UNiagaraComponent;
 
 UCLASS()
 class SLASH_API AEnemy : public ABaseCharacter
@@ -26,6 +26,10 @@ public:
         struct FDamageEvent const& DamageEvent,   //
         class AController* EventInstigator,       //
         AActor* DamageCauser) override;
+
+    void DeactivateFocusEffect();
+
+    void ActivateFocusEffect();
 
     virtual void Destroyed() override;
     /** </AActor> */
@@ -46,6 +50,8 @@ protected:
     virtual void AttackEnd() override;
     virtual void HandleDamage(float DamageAmount) override;
     virtual int32 PlayDeathMontage() override;
+    virtual void UpdateMotionWarpingComponent() override;
+    virtual void PawnSeen(APawn* SeenPawn) override;
     /** </ABaseCharacter> */
 
     UPROPERTY(BluePrintReadOnly)
@@ -76,19 +82,16 @@ private:
     bool IsEngaged() const;
     void StartAttackTimer();
     void ClearAttackTimer();
-    bool InTargetRange(AActor* TargetActor, double Range) const;
-    void MoveToTarget(AActor*& TargetActor);
+    bool InTargetRange(TWeakObjectPtr<AActor> TargetActor, double Range) const;
+    void MoveToTarget(TWeakObjectPtr<AActor>& TargetActor);
     AActor* ChoosePatrolTarget();
     void SpawnDefaultWeapon();
 
-    UFUNCTION()
-    void PawnSeen(APawn* SeenPawn);  // Callback for OnPawnSeend in UPawnSensingComponent
-
-    UPROPERTY(VisibleAnywhere)
-    UPawnSensingComponent* PawnSensingComponent;
-
     UPROPERTY(VisibleAnywhere)
     UHealthBarWidgetComponent* HealthBarWidgetComponent;
+
+    UPROPERTY(EditAnywhere, Category = "VFX")
+    UNiagaraComponent* FocusEffect;
 
     UPROPERTY(EditAnywhere)
     TSubclassOf<AWeapon> WeaponClass;
@@ -106,7 +109,7 @@ private:
     AAIController* EnemyController;
 
     UPROPERTY(EditInstanceOnly, Category = "AI Navigation")
-    AActor* PatrolTarget = nullptr;
+    TWeakObjectPtr<AActor> PatrolTarget = nullptr;
 
     UPROPERTY(EditInstanceOnly, Category = "AI Navigation")
     TArray<AActor*> PatrolTargets;

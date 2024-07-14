@@ -93,7 +93,7 @@ void AWeapon::OnBoxOverlap(UPrimitiveComponent* OverlappedComponent,  //
     FHitResult OutBoxHit;
     BoxTrace(OutBoxHit);
 
-    if (OutBoxHit.GetActor() && !IsActorSameType(OutBoxHit.GetActor()) && GetInstigator())
+    if (ShouldProcessHit(OutBoxHit))
     {
         ExecuteSendHit(OutBoxHit, GetInstigator());
         CreateFields(OutBoxHit.ImpactPoint);
@@ -165,4 +165,9 @@ void AWeapon::ExecuteSendHit(FHitResult& OutBoxHit, AActor* InstigatorActor)
 bool AWeapon::IsActorSameType(AActor* OtherActor)
 {
     return GetOwner()->ActorHasTag("Enemy") && OtherActor->ActorHasTag("Enemy");
+}
+
+bool AWeapon::ShouldProcessHit(FHitResult& OutBoxHit)
+{
+    return OutBoxHit.GetActor() && !IsActorSameType(OutBoxHit.GetActor()) && GetInstigator();
 }

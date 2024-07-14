@@ -11,6 +11,7 @@
 #include "GameFramework/DamageType.h"
 #include "Components/CapsuleComponent.h"
 #include "MotionWarpingComponent.h"
+#include "Perception/PawnSensingComponent.h"
 #include "BaseCharacter.h"
 
 ABaseCharacter::ABaseCharacter()
@@ -21,6 +22,7 @@ ABaseCharacter::ABaseCharacter()
     GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 
     MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>("MotionWarpingComponent");
+    PawnSensingComponent = CreateDefaultSubobject<UPawnSensingComponent>("PawnSensingComponent");
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
@@ -80,6 +82,25 @@ bool ABaseCharacter::IsAlive() const
     return AttributeComponent && AttributeComponent->IsAlive();
 }
 
+FVector ABaseCharacter::GetTranslationWarpTarget() const
+{
+    if (!CombatTarget.IsValid()) return FVector();
+    const FVector CombatTargetLocation = CombatTarget->GetActorLocation();
+    const FVector Location = GetActorLocation();
+    FVector TargetToMe = (Location - CombatTargetLocation).GetSafeNormal();
+    TargetToMe *= WarpTargetDistance;
+    return CombatTargetLocation + TargetToMe;
+}
+
+FVector ABaseCharacter::GetRotationWarpTarget() const
+{
+    if (!CombatTarget.IsValid()) return FVector();
+    const FVector TargetLocation = CombatTarget->GetActorLocation();
+    return TargetLocation;
+}
+
+void ABaseCharacter::PawnSeen(APawn* SeenPawn) {}
+
 void ABaseCharacter::AttackEnd() {}
 
 int32 ABaseCharacter::PlayAttackMontage()
@@ -114,23 +135,6 @@ void ABaseCharacter::StopAttackMontage()
     }
 }
 
-FVector ABaseCharacter::GetTranslationWarpTarget() const
-{
-    if (!CombatTarget) return FVector();
-    const FVector CombatTargetLocation = CombatTarget->GetActorLocation();
-    const FVector Location = GetActorLocation();
-    FVector TargetToMe = (Location - CombatTargetLocation).GetSafeNormal();
-    TargetToMe *= WarpTargetDistance;
-    return CombatTargetLocation + TargetToMe;
-}
-
-FVector ABaseCharacter::GetRotationWarpTarget() const
-{
-    if (!CombatTarget) return FVector();
-    const FVector TargetLocation = CombatTarget->GetActorLocation();
-    return TargetLocation;
-}
-
 void ABaseCharacter::PlayHitSound(const FVector& ImpactPoint)
 {
     if (!HitSound) return;
@@ -153,6 +157,8 @@ void ABaseCharacter::DisableCapsule()
 {
     GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
+
+void ABaseCharacter::UpdateMotionWarpingComponent() {}
 
 void ABaseCharacter::SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled)
 {

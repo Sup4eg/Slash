@@ -14,7 +14,9 @@
 #include "Components/AttributeComponent.h"
 #include "Items/Weapons/Weapon.h"
 #include "SlashCharacter.h"
+#include "MotionWarpingComponent.h"
 #include "Enemy.h"
+#include "NiagaraComponent.h"
 
 AEnemy::AEnemy()
 {
@@ -28,14 +30,18 @@ AEnemy::AEnemy()
     HealthBarWidgetComponent = CreateDefaultSubobject<UHealthBarWidgetComponent>("HealthBarWidgetComponent");
     HealthBarWidgetComponent->SetupAttachment(GetRootComponent());
 
-    PawnSensingComponent = CreateDefaultSubobject<UPawnSensingComponent>("PawnSensingComponent");
+    // Set sensing component
     PawnSensingComponent->SetPeripheralVisionAngle(45.f);
     PawnSensingComponent->SightRadius = 4000.f;
+    PawnSensingComponent->bOnlySensePlayers = true;
 
     GetCharacterMovement()->bOrientRotationToMovement = true;
     bUseControllerRotationYaw = false;
     bUseControllerRotationPitch = false;
     bUseControllerRotationRoll = false;
+
+    FocusEffect = CreateDefaultSubobject<UNiagaraComponent>("FocusEffect");
+    FocusEffect->SetupAttachment(GetRootComponent());
 }
 
 void AEnemy::Tick(float DeltaTime)
@@ -50,6 +56,7 @@ void AEnemy::Tick(float DeltaTime)
     {
         CheckPatrolTarget();
     }
+    UpdateMotionWarpingComponent();
 }
 
 float AEnemy::TakeDamage(float DamageAmount,  //
@@ -68,12 +75,23 @@ float AEnemy::TakeDamage(float DamageAmount,  //
     {
         ChaseTarget();
     }
-    ASlashCharacter* Player = Cast<ASlashCharacter>(DamageCauser->GetOwner());
-    if (Player && !Player->GetCombatTarget())
-    {
-        Player->SetCombatTarget(this);
-    }
     return DamageAmount;
+}
+
+void AEnemy::DeactivateFocusEffect()
+{
+    if (FocusEffect)
+    {
+        FocusEffect->Deactivate();
+    }
+}
+
+void AEnemy::ActivateFocusEffect()
+{
+    if (FocusEffect)
+    {
+        FocusEffect->Activate();
+    }
 }
 
 void AEnemy::Destroyed()
@@ -98,13 +116,15 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 void AEnemy::BeginPlay()
 {
     Super::BeginPlay();
+    DeactivateFocusEffect();
     check(GetWorld());
-    if (PawnSensingComponent)
-    {
-        PawnSensingComponent->OnSeePawn.AddDynamic(this, &AEnemy::PawnSeen);
-    }
     Initialize();
     Tags.Add("Enemy");
+
+    if (PawnSensingComponent)
+    {
+        PawnSensingComponent->OnSeePawn.AddDynamic(this, &ABaseCharacter::PawnSeen);
+    }
 }
 
 void AEnemy::Die()
@@ -156,6 +176,16 @@ int32 AEnemy::PlayDeathMontage()
         DeathPose = Pose;
     }
     return Selection;
+}
+
+void AEnemy::UpdateMotionWarpingComponent()
+{
+    Super::UpdateMotionWarpingComponent();
+    if (MotionWarpingComponent && CombatTarget.IsValid())
+    {
+        MotionWarpingComponent->AddOrUpdateWarpTargetFromLocation(TranslationTargetName, GetTranslationWarpTarget());
+        MotionWarpingComponent->AddOrUpdateWarpTargetFromLocation(RotationTargetName, GetRotationWarpTarget());
+    }
 }
 
 void AEnemy::CheckCombatTarget()
@@ -290,19 +320,19 @@ void AEnemy::ClearAttackTimer()
     GetWorldTimerManager().ClearTimer(AttackTimerHandle);
 }
 
-bool AEnemy::InTargetRange(AActor* TargetActor, double Range) const
+bool AEnemy::InTargetRange(TWeakObjectPtr<AActor> TargetActor, double Range) const
 {
-    if (!TargetActor) return false;
+    if (!TargetActor.IsValid()) return false;
     const double DistanceToTarget = (TargetActor->GetActorLocation() - GetActorLocation()).Size();
     return DistanceToTarget <= Range;
 }
 
-void AEnemy::MoveToTarget(AActor*& TargetActor)
+void AEnemy::MoveToTarget(TWeakObjectPtr<AActor>& TargetActor)
 {
-    if (EnemyController && TargetActor)
+    if (EnemyController && TargetActor.IsValid())
     {
         FAIMoveRequest MoveRequest;
-        MoveRequest.SetGoalActor(TargetActor);
+        MoveRequest.SetGoalActor(TargetActor.Get());
         MoveRequest.SetAcceptanceRadius(20.f);
         EnemyController->MoveTo(MoveRequest);
     }
@@ -325,6 +355,7 @@ AActor* AEnemy::ChoosePatrolTarget()
 
 void AEnemy::PawnSeen(APawn* SeenPawn)
 {
+    Super::PawnSeen(SeenPawn);
     const bool bShouldChaseTarget =                 //
         !IsDead() &&                                //
         EnemyState != EEnemyState::EES_Chasing &&   //

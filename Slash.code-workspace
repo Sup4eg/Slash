@@ -11,7 +11,10 @@
 	],
 	"settings": {
 		"typescript.tsc.autoDetect": "off",
-		"npm.autoDetect": "off"
+		"npm.autoDetect": "off",
+		"files.associations": {
+			"__config": "cpp"
+		}
 	},
 	"extensions": {
 		"recommendations": [
@@ -1004,8 +1007,7 @@
 				"request": "launch",
 				"program": "D:\\UEProjects\\Slash\\Binaries\\Win64\\UnrealGame-Win64-Debug.exe",
 				"preLaunchTask": "Slash Win64 Debug Build",
-				"args": [
-				],
+				"args": [],
 				"cwd": "D:\\UE_5.4",
 				"stopAtEntry": false,
 				"console": "integratedTerminal",
@@ -1020,8 +1022,7 @@
 				"request": "launch",
 				"program": "D:\\UEProjects\\Slash\\Binaries\\Win64\\UnrealGame-Win64-DebugGame.exe",
 				"preLaunchTask": "Slash Win64 DebugGame Build",
-				"args": [
-				],
+				"args": [],
 				"cwd": "D:\\UE_5.4",
 				"stopAtEntry": false,
 				"console": "integratedTerminal",
@@ -1036,8 +1037,7 @@
 				"request": "launch",
 				"program": "D:\\UEProjects\\Slash\\Binaries\\Win64\\UnrealGame.exe",
 				"preLaunchTask": "Slash Win64 Development Build",
-				"args": [
-				],
+				"args": [],
 				"cwd": "D:\\UE_5.4",
 				"stopAtEntry": false,
 				"console": "integratedTerminal",
@@ -1052,8 +1052,7 @@
 				"request": "launch",
 				"program": "D:\\UEProjects\\Slash\\Binaries\\Win64\\UnrealGame-Win64-Test.exe",
 				"preLaunchTask": "Slash Win64 Test Build",
-				"args": [
-				],
+				"args": [],
 				"cwd": "D:\\UE_5.4",
 				"stopAtEntry": false,
 				"console": "integratedTerminal",
@@ -1068,8 +1067,7 @@
 				"request": "launch",
 				"program": "D:\\UEProjects\\Slash\\Binaries\\Win64\\UnrealGame-Win64-Shipping.exe",
 				"preLaunchTask": "Slash Win64 Shipping Build",
-				"args": [
-				],
+				"args": [],
 				"cwd": "D:\\UE_5.4",
 				"stopAtEntry": false,
 				"console": "integratedTerminal",

@@ -13,6 +13,7 @@ class UAttributeComponent;
 class USoundBase;
 class UParticleSystem;
 class UMotionWarpingComponent;
+class UPawnSensingComponent;
 
 UCLASS()
 class SLASH_API ABaseCharacter : public ACharacter, public IHitInterface
@@ -38,6 +39,11 @@ protected:
     void DirectionalHitReact(const FVector& ImpactPoint);
     virtual void HandleDamage(float DamageAmount);
     bool IsAlive() const;
+    FVector GetTranslationWarpTarget() const;
+    FVector GetRotationWarpTarget() const;
+
+    UFUNCTION()
+    virtual void PawnSeen(APawn* SeenPawn);  // Callback for OnPawnSeend in UPawnSensingComponent
 
     UFUNCTION(BlueprintCallable)
     virtual void AttackEnd();
@@ -47,13 +53,6 @@ protected:
     virtual int32 PlayDeathMontage();
     void PlayHitReactMontage(const FName& SectionName);
     void StopAttackMontage();
-
-    UFUNCTION(BlueprintCallable)
-    FVector GetTranslationWarpTarget() const;
-
-    UFUNCTION(BlueprintCallable)
-    FVector GetRotationWarpTarget() const;
-
     // VFX
     void PlayHitSound(const FVector& ImpactPoint);
     void PlayDeathSound(const FVector& ActorLocation);
@@ -61,6 +60,8 @@ protected:
     void SpawnHitParticles(const FVector& ImpactPoint);
 
     void DisableCapsule();
+
+    virtual void UpdateMotionWarpingComponent();
 
     UFUNCTION(BlueprintCallable)
     void SetWeaponCollisionEnabled(ECollisionEnabled::Type CollisionEnabled);
@@ -71,8 +72,20 @@ protected:
     UPROPERTY(VisibleAnywhere)
     UAttributeComponent* AttributeComponent;
 
+    UPROPERTY(VisibleAnywhere)
+    UMotionWarpingComponent* MotionWarpingComponent;
+
+    UPROPERTY(VisibleAnywhere)
+    UPawnSensingComponent* PawnSensingComponent;
+
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Combat")
-    AActor* CombatTarget;
+    TWeakObjectPtr<AActor> CombatTarget;
+
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    FName TranslationTargetName = "TranslationTarget";
+
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    FName RotationTargetName = "RotationTarget";
 
 private:
     UAnimMontage* GetAttackMontage(EWeaponType WeaponType) const;
@@ -104,19 +117,6 @@ private:
     UPROPERTY(EditDefaultsOnly, Category = "Montages")
     TMap<EWeaponType, UAnimMontage*> WeaponTypeToAttackMontages;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-    UMotionWarpingComponent* MotionWarpingComponent;
-
     UPROPERTY(EditAnywhere, Category = "Combat")
     double WarpTargetDistance = 75.f;
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Combat")
-    FName TranslationTargetName = "TranslationTarget";
-
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"), Category = "Combat")
-    FName RotationTargetName = "RotationTarget";
-
-public:
-    FORCEINLINE void SetCombatTarget(AActor* Target) { CombatTarget = Target; }
-    FORCEINLINE AActor* GetCombatTarget() const { return CombatTarget; }
 };

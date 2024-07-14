@@ -15,6 +15,9 @@
 #include "Animation/AnimInstance.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Perception/PawnSensingComponent.h"
+#include "MotionWarpingComponent.h"
+#include "Enemy.h"
 
 ASlashCharacter::ASlashCharacter()
 {
@@ -41,6 +44,11 @@ ASlashCharacter::ASlashCharacter()
     GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Overlap);
     GetMesh()->SetGenerateOverlapEvents(true);
 
+    // Set sensing component
+    PawnSensingComponent->SetPeripheralVisionAngle(45.f);
+    PawnSensingComponent->SightRadius = 4000.f;
+    PawnSensingComponent->bOnlySensePlayers = false;
+
     Hair = CreateDefaultSubobject<UGroomComponent>("Hair");
     Hair->SetupAttachment(GetMesh());
     Hair->AttachmentName = "head";
@@ -53,6 +61,8 @@ ASlashCharacter::ASlashCharacter()
 void ASlashCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
+    UpdateMotionWarpingComponent();
+    CheckPawnsVisibility();
 }
 
 void ASlashCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -68,6 +78,7 @@ void ASlashCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
         EnhancedInputComponent->BindAction(EquipOneHandedWeaponAction, ETriggerEvent::Started, this, &ASlashCharacter::Key1Pressed);
         EnhancedInputComponent->BindAction(EquipTwoHandedWeaponAction, ETriggerEvent::Started, this, &ASlashCharacter::Key2Pressed);
         EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &ASlashCharacter::Attack);
+        EnhancedInputComponent->BindAction(FocusAction, ETriggerEvent::Started, this, &ASlashCharacter::Focus);
     }
 }
 
@@ -104,6 +115,29 @@ bool ASlashCharacter::CanAttack() const
 void ASlashCharacter::AttackEnd()
 {
     ActionState = EActionState::EAS_Unoccupied;
+}
+
+void ASlashCharacter::UpdateMotionWarpingComponent()
+{
+    Super::UpdateMotionWarpingComponent();
+    const FMotionWarpingTarget* CombatWarpTarget = MotionWarpingComponent->FindWarpTarget(RotationTargetName);
+    if (CombatWarpTarget)
+    {
+        MotionWarpingComponent->RemoveWarpTarget(RotationTargetName);
+    }
+    if (MotionWarpingComponent && CombatTarget.IsValid())
+    {
+        MotionWarpingComponent->AddOrUpdateWarpTargetFromLocation(RotationTargetName, GetRotationWarpTarget());
+    }
+}
+
+void ASlashCharacter::PawnSeen(APawn* SeenPawn)
+{
+    Super::PawnSeen(SeenPawn);
+    if (SeenPawn)
+    {
+        VisiblePawns.Add(SeenPawn);
+    }
 }
 
 void ASlashCharacter::PlayEquipMontage(const FName& SectionName)
@@ -183,6 +217,21 @@ void ASlashCharacter::Jump()
 {
     if (ActionState != EActionState::EAS_Unoccupied) return;
     Super::Jump();
+}
+
+void ASlashCharacter::Focus()
+{
+    APawn* TargetPawn = GetNearestVisiblePawn();
+    if (!TargetPawn) return;
+
+    if (CombatTarget.Get() != TargetPawn)
+    {
+        FocusOn(TargetPawn);
+    }
+    else
+    {
+        FocusOff();
+    }
 }
 
 void ASlashCharacter::EKeyPressed()
@@ -296,4 +345,56 @@ void ASlashCharacter::RemoveFromUnequippedWeapons(EWeaponType WeaponType)
     {
         UnequippedWeapons.Remove(WeaponType);
     }
+}
+
+void ASlashCharacter::CheckPawnsVisibility()
+{
+    for (TWeakObjectPtr<APawn>& VisiblePawn : VisiblePawns)
+    {
+        if (VisiblePawn.IsValid() && !PawnSensingComponent->CouldSeePawn(VisiblePawn.Get()))
+        {
+            VisiblePawns.Remove(VisiblePawn);
+        }
+    }
+}
+
+void ASlashCharacter::FocusOn(APawn* TargetPawn)
+{
+    CombatTarget = TargetPawn;
+    AEnemy* TargetEnemy = Cast<AEnemy>(TargetPawn);
+    if (TargetEnemy)
+    {
+        TargetEnemy->ActivateFocusEffect();
+    }
+}
+
+void ASlashCharacter::FocusOff()
+{
+    AEnemy* NearestVisibleEnemy = Cast<AEnemy>(CombatTarget.Get());
+    if (NearestVisibleEnemy)
+    {
+        NearestVisibleEnemy->DeactivateFocusEffect();
+    }
+    CombatTarget = nullptr;
+}
+
+APawn* ASlashCharacter::GetNearestVisiblePawn()
+{
+    APawn* NearestPawn = nullptr;
+    float NearestDistanceToPawn = FLT_MAX;
+
+    for (TWeakObjectPtr<APawn>& VisiblePawn : VisiblePawns)
+    {
+        if (VisiblePawn.IsValid() && VisiblePawn.Get() != this && PawnSensingComponent->CouldSeePawn(VisiblePawn.Get()))
+        {
+            float ActorToPawnDistance = FVector::DistSquared(VisiblePawn->GetActorLocation(), GetActorLocation());
+            if (ActorToPawnDistance < NearestDistanceToPawn)
+            {
+                NearestDistanceToPawn = ActorToPawnDistance;
+                NearestPawn = VisiblePawn.Get();
+            }
+        }
+    }
+
+    return NearestPawn;
 }

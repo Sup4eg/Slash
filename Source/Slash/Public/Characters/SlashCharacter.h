@@ -32,12 +32,18 @@ public:
     /** </HitInterface> */
 
 protected:
+    /** <AActor> */
     virtual void BeginPlay() override;
+    /** </AActor> */
 
-    /** Combat */
+    /** <ABaseCharacter> */
     virtual void Attack() override;
     virtual bool CanAttack() const override;
     virtual void AttackEnd() override;
+    virtual void UpdateMotionWarpingComponent() override;
+    virtual void PawnSeen(APawn* SeenPawn) override;
+    /** </ABaseCharacter> */
+
     void PlayEquipMontage(const FName& SectionName);
 
     UFUNCTION(BlueprintCallable)
@@ -59,6 +65,7 @@ protected:
     void Move(const FInputActionValue& Value);
     void Look(const FInputActionValue& Value);
     void Jump();
+    void Focus();
     void EKeyPressed();
     void Key1Pressed();
     void Key2Pressed();
@@ -87,6 +94,9 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Input")
     UInputAction* EquipTwoHandedWeaponAction;
 
+    UPROPERTY(EditAnywhere, Category = "Input")
+    UInputAction* FocusAction;
+
 private:
     ECharacterState GetCharacterStateByWeaponType(EWeaponType WeaponType) const;
     bool CanEquip(AWeapon* OverlappingWeapon) const;
@@ -97,6 +107,10 @@ private:
     void EquipWeapon(AWeapon* Weapon);
     void DestroyUnequippedWeapon(EWeaponType WeaponType);
     void RemoveFromUnequippedWeapons(EWeaponType WeaponType);
+    void CheckPawnsVisibility();
+    void FocusOn(APawn* TargetPawn);
+    void FocusOff();
+    APawn* GetNearestVisiblePawn();
 
     /** Character components */
     UPROPERTY(VisibleAnywhere) UCameraComponent* ViewCamera;
@@ -125,6 +139,9 @@ private:
 
     UPROPERTY(BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     EActionState ActionState = EActionState::EAS_Unoccupied;
+
+    UPROPERTY(VisibleInstanceOnly)
+    TSet<TWeakObjectPtr<APawn>> VisiblePawns;
 
 public:
     FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }

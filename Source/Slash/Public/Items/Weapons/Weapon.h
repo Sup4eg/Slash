@@ -60,6 +60,8 @@ private:
 
     bool IsActorSameType(AActor* OtherActor);
 
+    bool ShouldProcessHit(FHitResult& OutBoxHit);
+
     UPROPERTY(EditAnywhere, Category = "Weapon data")
     FVector BoxTraceCoord = FVector(5.f, 5.f, 5.f);
 
