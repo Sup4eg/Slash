@@ -15,8 +15,9 @@
 #include "Animation/AnimInstance.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
-#include "Perception/PawnSensingComponent.h"
+#include "Components/SphereComponent.h"
 #include "MotionWarpingComponent.h"
+#include "Kismet/KismetSystemLibrary.h"
 #include "Enemy.h"
 
 ASlashCharacter::ASlashCharacter()
@@ -44,10 +45,11 @@ ASlashCharacter::ASlashCharacter()
     GetMesh()->SetCollisionResponseToChannel(ECollisionChannel::ECC_WorldDynamic, ECollisionResponse::ECR_Overlap);
     GetMesh()->SetGenerateOverlapEvents(true);
 
-    // Set sensing component
-    PawnSensingComponent->SetPeripheralVisionAngle(45.f);
-    PawnSensingComponent->SightRadius = 4000.f;
-    PawnSensingComponent->bOnlySensePlayers = false;
+    VisibilitySphere = CreateDefaultSubobject<USphereComponent>("VisibilitySphere");
+    VisibilitySphere->SetupAttachment(GetRootComponent());
+    VisibilitySphere->SetSphereRadius(1000.f);
+    VisibilitySphere->SetCollisionResponseToAllChannels(ECollisionResponse::ECR_Ignore);
+    VisibilitySphere->SetCollisionResponseToChannel(ECollisionChannel::ECC_Pawn, ECollisionResponse::ECR_Overlap);
 
     Hair = CreateDefaultSubobject<UGroomComponent>("Hair");
     Hair->SetupAttachment(GetMesh());
@@ -62,7 +64,6 @@ void ASlashCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
     UpdateMotionWarpingComponent();
-    CheckPawnsVisibility();
 }
 
 void ASlashCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -93,6 +94,8 @@ void ASlashCharacter::BeginPlay()
 {
     Super::BeginPlay();
     SetUpInputMappingContext();
+    VisibilitySphere->OnComponentBeginOverlap.AddDynamic(this, &ASlashCharacter::EnemySeen);
+    VisibilitySphere->OnComponentEndOverlap.AddDynamic(this, &ASlashCharacter::EnemyUnSeen);
     Tags.Add("EngageableTarget");
 }
 
@@ -128,15 +131,6 @@ void ASlashCharacter::UpdateMotionWarpingComponent()
     if (MotionWarpingComponent && CombatTarget.IsValid())
     {
         MotionWarpingComponent->AddOrUpdateWarpTargetFromLocation(RotationTargetName, GetRotationWarpTarget());
-    }
-}
-
-void ASlashCharacter::PawnSeen(APawn* SeenPawn)
-{
-    Super::PawnSeen(SeenPawn);
-    if (SeenPawn)
-    {
-        VisiblePawns.Add(SeenPawn);
     }
 }
 
@@ -221,12 +215,12 @@ void ASlashCharacter::Jump()
 
 void ASlashCharacter::Focus()
 {
-    APawn* TargetPawn = GetNearestVisiblePawn();
-    if (!TargetPawn) return;
+    AEnemy* TargetEnemy = GetNearestVisibleEnemy();
+    if (!TargetEnemy) return;
 
-    if (CombatTarget.Get() != TargetPawn)
+    if (CombatEnemy != TargetEnemy)
     {
-        FocusOn(TargetPawn);
+        FocusOn(TargetEnemy);
     }
     else
     {
@@ -347,22 +341,17 @@ void ASlashCharacter::RemoveFromUnequippedWeapons(EWeaponType WeaponType)
     }
 }
 
-void ASlashCharacter::CheckPawnsVisibility()
+void ASlashCharacter::FocusOn(AEnemy* TargetEnemy)
 {
-    for (TWeakObjectPtr<APawn>& VisiblePawn : VisiblePawns)
+    // Deactivate previous combat enemy focus effect
+    if (CombatEnemy.IsValid())
     {
-        if (VisiblePawn.IsValid() && !PawnSensingComponent->CouldSeePawn(VisiblePawn.Get()))
-        {
-            VisiblePawns.Remove(VisiblePawn);
-        }
+        CombatEnemy->DeactivateFocusEffect();
     }
-}
-
-void ASlashCharacter::FocusOn(APawn* TargetPawn)
-{
-    CombatTarget = TargetPawn;
-    AEnemy* TargetEnemy = Cast<AEnemy>(TargetPawn);
-    if (TargetEnemy)
+    // Set new combat enemy
+    CombatTarget = TargetEnemy;
+    CombatEnemy = TargetEnemy;
+    if (CombatEnemy.IsValid())
     {
         TargetEnemy->ActivateFocusEffect();
     }
@@ -370,31 +359,59 @@ void ASlashCharacter::FocusOn(APawn* TargetPawn)
 
 void ASlashCharacter::FocusOff()
 {
-    AEnemy* NearestVisibleEnemy = Cast<AEnemy>(CombatTarget.Get());
-    if (NearestVisibleEnemy)
+    if (CombatEnemy.IsValid())
     {
-        NearestVisibleEnemy->DeactivateFocusEffect();
+        CombatEnemy->DeactivateFocusEffect();
     }
     CombatTarget = nullptr;
+    CombatEnemy = nullptr;
 }
 
-APawn* ASlashCharacter::GetNearestVisiblePawn()
+AEnemy* ASlashCharacter::GetNearestVisibleEnemy()
 {
-    APawn* NearestPawn = nullptr;
-    float NearestDistanceToPawn = FLT_MAX;
+    AEnemy* NearestEnemy = CombatEnemy.Get();
+    float NearestPlayerToEnemyDistance = FLT_MAX;
 
-    for (TWeakObjectPtr<APawn>& VisiblePawn : VisiblePawns)
+    for (TWeakObjectPtr<AEnemy>& VisibleEnemy : VisibleEnemies)
     {
-        if (VisiblePawn.IsValid() && VisiblePawn.Get() != this && PawnSensingComponent->CouldSeePawn(VisiblePawn.Get()))
+        if (VisibleEnemy.IsValid() && VisibleEnemy.Get() != CombatEnemy.Get() && IsEnemyVisible(VisibleEnemy.Get()))
         {
-            float ActorToPawnDistance = FVector::DistSquared(VisiblePawn->GetActorLocation(), GetActorLocation());
-            if (ActorToPawnDistance < NearestDistanceToPawn)
+            float PlayerToEnemyDistance = FVector::DistSquared(VisibleEnemy->GetActorLocation(), GetActorLocation());
+            if (PlayerToEnemyDistance < NearestPlayerToEnemyDistance)
             {
-                NearestDistanceToPawn = ActorToPawnDistance;
-                NearestPawn = VisiblePawn.Get();
+                NearestPlayerToEnemyDistance = PlayerToEnemyDistance;
+                NearestEnemy = VisibleEnemy.Get();
             }
         }
     }
+    return NearestEnemy;
+}
 
-    return NearestPawn;
+bool ASlashCharacter::IsEnemyVisible(AEnemy* Enemy)
+{
+    FHitResult OutHitResult;
+    UKismetSystemLibrary::LineTraceSingle(this, GetActorLocation(), Enemy->GetActorLocation(), ETraceTypeQuery::TraceTypeQuery1, false,
+        TArray<AActor*>{this}, EDrawDebugTrace::None, OutHitResult, true);
+    return OutHitResult.GetActor() == Enemy;
+}
+
+void ASlashCharacter::EnemySeen(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,
+    int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+    AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+    if (Enemy)
+    {
+        VisibleEnemies.Add(Enemy);
+    }
+}
+
+void ASlashCharacter::EnemyUnSeen(
+    UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+    AEnemy* Enemy = Cast<AEnemy>(OtherActor);
+    if (Enemy && Enemy == CombatEnemy.Get())
+    {
+        FocusOff();
+    }
+    VisibleEnemies.Remove(Enemy);
 }

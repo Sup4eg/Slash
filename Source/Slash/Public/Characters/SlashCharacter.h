@@ -14,6 +14,8 @@ class UCameraComponent;
 class USpringArmComponent;
 class UGroomComponent;
 class AItem;
+class USphereComponent;
+class AEnemy;
 
 UCLASS()
 class SLASH_API ASlashCharacter : public ABaseCharacter
@@ -41,7 +43,6 @@ protected:
     virtual bool CanAttack() const override;
     virtual void AttackEnd() override;
     virtual void UpdateMotionWarpingComponent() override;
-    virtual void PawnSeen(APawn* SeenPawn) override;
     /** </ABaseCharacter> */
 
     void PlayEquipMontage(const FName& SectionName);
@@ -107,16 +108,34 @@ private:
     void EquipWeapon(AWeapon* Weapon);
     void DestroyUnequippedWeapon(EWeaponType WeaponType);
     void RemoveFromUnequippedWeapons(EWeaponType WeaponType);
-    void CheckPawnsVisibility();
-    void FocusOn(APawn* TargetPawn);
+    void FocusOn(AEnemy* TargetEnemy);
     void FocusOff();
-    APawn* GetNearestVisiblePawn();
+    AEnemy* GetNearestVisibleEnemy();
+    bool IsEnemyVisible(AEnemy* Enemy);
+
+    UFUNCTION()
+    virtual void EnemySeen(UPrimitiveComponent* OverlappedComponent,  //
+        AActor* OtherActor,                                           //
+        UPrimitiveComponent* OtherComp,                               //
+        int32 OtherBodyIndex,                                         //
+        bool bFromSweep,                                              //
+        const FHitResult& SweepResult);
+
+    UFUNCTION()
+    virtual void EnemyUnSeen(UPrimitiveComponent* OverlappedComponent,  //
+        AActor* OtherActor,                                             //
+        UPrimitiveComponent* OtherComp,                                 //
+        int32 OtherBodyIndex);
 
     /** Character components */
-    UPROPERTY(VisibleAnywhere) UCameraComponent* ViewCamera;
+    UPROPERTY(VisibleAnywhere)
+    UCameraComponent* ViewCamera;
 
     UPROPERTY(VisibleAnywhere)
     USpringArmComponent* CameraBoom;
+
+    UPROPERTY(VisibleAnywhere)
+    USphereComponent* VisibilitySphere;
 
     UPROPERTY(VisibleAnywhere, Category = "Hair")
     UGroomComponent* Hair;
@@ -141,7 +160,10 @@ private:
     EActionState ActionState = EActionState::EAS_Unoccupied;
 
     UPROPERTY(VisibleInstanceOnly)
-    TSet<TWeakObjectPtr<APawn>> VisiblePawns;
+    TSet<TWeakObjectPtr<AEnemy>> VisibleEnemies;
+
+    UPROPERTY(VisibleInstanceOnly)
+    TWeakObjectPtr<AEnemy> CombatEnemy;
 
 public:
     FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }

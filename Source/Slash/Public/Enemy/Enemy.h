@@ -51,7 +51,6 @@ protected:
     virtual void HandleDamage(float DamageAmount) override;
     virtual int32 PlayDeathMontage() override;
     virtual void UpdateMotionWarpingComponent() override;
-    virtual void PawnSeen(APawn* SeenPawn) override;
     /** </ABaseCharacter> */
 
     UPROPERTY(BluePrintReadOnly)
@@ -87,11 +86,17 @@ private:
     AActor* ChoosePatrolTarget();
     void SpawnDefaultWeapon();
 
+    UFUNCTION()
+    virtual void PawnSeen(APawn* SeenPawn);  // Callback for OnPawnSeend in UPawnSensingComponent
+
     UPROPERTY(VisibleAnywhere)
     UHealthBarWidgetComponent* HealthBarWidgetComponent;
 
     UPROPERTY(EditAnywhere, Category = "VFX")
     UNiagaraComponent* FocusEffect;
+
+    UPROPERTY(VisibleAnywhere)
+    UPawnSensingComponent* PawnSensingComponent;
 
     UPROPERTY(EditAnywhere)
     TSubclassOf<AWeapon> WeaponClass;

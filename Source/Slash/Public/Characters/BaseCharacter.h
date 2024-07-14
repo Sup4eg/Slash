@@ -42,9 +42,6 @@ protected:
     FVector GetTranslationWarpTarget() const;
     FVector GetRotationWarpTarget() const;
 
-    UFUNCTION()
-    virtual void PawnSeen(APawn* SeenPawn);  // Callback for OnPawnSeend in UPawnSensingComponent
-
     UFUNCTION(BlueprintCallable)
     virtual void AttackEnd();
 
@@ -74,9 +71,6 @@ protected:
 
     UPROPERTY(VisibleAnywhere)
     UMotionWarpingComponent* MotionWarpingComponent;
-
-    UPROPERTY(VisibleAnywhere)
-    UPawnSensingComponent* PawnSensingComponent;
 
     UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Combat")
     TWeakObjectPtr<AActor> CombatTarget;

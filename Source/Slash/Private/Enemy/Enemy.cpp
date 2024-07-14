@@ -31,6 +31,7 @@ AEnemy::AEnemy()
     HealthBarWidgetComponent->SetupAttachment(GetRootComponent());
 
     // Set sensing component
+    PawnSensingComponent = CreateDefaultSubobject<UPawnSensingComponent>("PawnSensingComponent");
     PawnSensingComponent->SetPeripheralVisionAngle(45.f);
     PawnSensingComponent->SightRadius = 4000.f;
     PawnSensingComponent->bOnlySensePlayers = true;
@@ -123,7 +124,7 @@ void AEnemy::BeginPlay()
 
     if (PawnSensingComponent)
     {
-        PawnSensingComponent->OnSeePawn.AddDynamic(this, &ABaseCharacter::PawnSeen);
+        PawnSensingComponent->OnSeePawn.AddDynamic(this, &AEnemy::PawnSeen);
     }
 }
 
@@ -353,9 +354,17 @@ AActor* AEnemy::ChoosePatrolTarget()
     return ValidTargets[PatrolTargetIndex];
 }
 
+void AEnemy::SpawnDefaultWeapon()
+{
+    if (WeaponClass)
+    {
+        LastEquippedWeapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass);
+        LastEquippedWeapon->Equip(GetMesh(), LastEquippedWeapon->ArmSocketName, this, this);
+    }
+}
+
 void AEnemy::PawnSeen(APawn* SeenPawn)
 {
-    Super::PawnSeen(SeenPawn);
     const bool bShouldChaseTarget =                 //
         !IsDead() &&                                //
         EnemyState != EEnemyState::EES_Chasing &&   //
@@ -367,15 +376,6 @@ void AEnemy::PawnSeen(APawn* SeenPawn)
         CombatTarget = SeenPawn;
         ClearPatrolTimer();
         ChaseTarget();
-    }
-}
-
-void AEnemy::SpawnDefaultWeapon()
-{
-    if (WeaponClass)
-    {
-        LastEquippedWeapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass);
-        LastEquippedWeapon->Equip(GetMesh(), LastEquippedWeapon->ArmSocketName, this, this);
     }
 }
 

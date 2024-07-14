@@ -11,7 +11,6 @@
 #include "GameFramework/DamageType.h"
 #include "Components/CapsuleComponent.h"
 #include "MotionWarpingComponent.h"
-#include "Perception/PawnSensingComponent.h"
 #include "BaseCharacter.h"
 
 ABaseCharacter::ABaseCharacter()
@@ -22,7 +21,6 @@ ABaseCharacter::ABaseCharacter()
     GetCapsuleComponent()->SetCollisionResponseToChannel(ECollisionChannel::ECC_Camera, ECollisionResponse::ECR_Ignore);
 
     MotionWarpingComponent = CreateDefaultSubobject<UMotionWarpingComponent>("MotionWarpingComponent");
-    PawnSensingComponent = CreateDefaultSubobject<UPawnSensingComponent>("PawnSensingComponent");
 }
 
 void ABaseCharacter::Tick(float DeltaTime)
@@ -98,8 +96,6 @@ FVector ABaseCharacter::GetRotationWarpTarget() const
     const FVector TargetLocation = CombatTarget->GetActorLocation();
     return TargetLocation;
 }
-
-void ABaseCharacter::PawnSeen(APawn* SeenPawn) {}
 
 void ABaseCharacter::AttackEnd() {}
 
