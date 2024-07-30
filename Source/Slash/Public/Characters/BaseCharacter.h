@@ -6,6 +6,7 @@
 #include "GameFramework/Character.h"
 #include "Items/Weapons/WeaponTypes.h"
 #include "Interfaces/HitInterface.h"
+#include "Characters/CharacterTypes.h"
 #include "BaseCharacter.generated.h"
 
 class AWeapon;
@@ -39,6 +40,7 @@ protected:
     void DirectionalHitReact(const FVector& ImpactPoint);
     virtual void HandleDamage(float DamageAmount);
     bool IsAlive() const;
+    void DisableMeshCollision();
     FVector GetTranslationWarpTarget() const;
     FVector GetRotationWarpTarget() const;
 
@@ -47,7 +49,6 @@ protected:
 
     // Montages
     virtual int32 PlayAttackMontage();
-    virtual int32 PlayDeathMontage();
     void PlayHitReactMontage(const FName& SectionName);
     void StopAttackMontage();
     // VFX
@@ -81,11 +82,15 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Combat")
     FName RotationTargetName = "RotationTarget";
 
+    UPROPERTY(BluePrintReadOnly)
+    TEnumAsByte<EDeathPose> DeathPose;
+
 private:
     UAnimMontage* GetAttackMontage(EWeaponType WeaponType) const;
     double GetDirectionalHitReactAngle(const FVector& ImpactPoint) const;
     FName GetDirectionalHitReactSection(double Theta) const;
     int32 PlayMontageSection(UAnimMontage* Montage);
+    int32 PlayDeathMontage();
     int32 GetRandomMontageSection(UAnimMontage* Montage);
     bool IsMontageSectionsEmpty(UAnimMontage* Montage) const;
 
@@ -113,4 +118,7 @@ private:
 
     UPROPERTY(EditAnywhere, Category = "Combat")
     double WarpTargetDistance = 75.f;
+
+public:
+    FORCEINLINE TEnumAsByte<EDeathPose> GetDeathPose() const { return DeathPose; }
 };

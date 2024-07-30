@@ -130,8 +130,9 @@ void AEnemy::BeginPlay()
 
 void AEnemy::Die()
 {
+    Super::Die();
+
     HideHealthBar();
-    PlayDeathMontage();
     ClearAttackTimer();
     DisableCapsule();
     EnemyState = EEnemyState::EES_Dead;
@@ -143,6 +144,7 @@ void AEnemy::Die()
 void AEnemy::Attack()
 {
     Super::Attack();
+    if (!CombatTarget.IsValid()) return;
     EnemyState = EEnemyState::EES_Engaged;
     PlayAttackMontage();
 }
@@ -166,17 +168,6 @@ void AEnemy::HandleDamage(float DamageAmount)
     {
         HealthBarWidgetComponent->SetHealthPercentage(AttributeComponent->GetHealthPercent());
     }
-}
-
-int32 AEnemy::PlayDeathMontage()
-{
-    const int32 Selection = Super::PlayDeathMontage();
-    TEnumAsByte<EDeathPose> Pose(Selection);
-    if (Pose >= EDeathPose::EDP_Death1 && Pose < EDeathPose::EDP_MAX)
-    {
-        DeathPose = Pose;
-    }
-    return Selection;
 }
 
 void AEnemy::UpdateMotionWarpingComponent()
@@ -365,11 +356,12 @@ void AEnemy::SpawnDefaultWeapon()
 
 void AEnemy::PawnSeen(APawn* SeenPawn)
 {
-    const bool bShouldChaseTarget =                 //
-        !IsDead() &&                                //
-        EnemyState != EEnemyState::EES_Chasing &&   //
-        EnemyState < EEnemyState::EES_Attacking &&  //
-        SeenPawn->ActorHasTag("EngageableTarget");  //
+    const bool bShouldChaseTarget =                   //
+        !IsDead() &&                                  //
+        EnemyState != EEnemyState::EES_Chasing &&     //
+        EnemyState < EEnemyState::EES_Attacking &&    //
+        SeenPawn->ActorHasTag("EngageableTarget") &&  //
+        !SeenPawn->ActorHasTag("Dead");               //
 
     if (bShouldChaseTarget)
     {

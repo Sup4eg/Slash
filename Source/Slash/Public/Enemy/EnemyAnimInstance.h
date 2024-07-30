@@ -4,9 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
-#include "Enemy/Enemy.h"
 #include "Characters/CharacterTypes.h"
 #include "EnemyAnimInstance.generated.h"
+
+class AEnemy;
 
 UCLASS()
 class SLASH_API UEnemyAnimInstance : public UAnimInstance

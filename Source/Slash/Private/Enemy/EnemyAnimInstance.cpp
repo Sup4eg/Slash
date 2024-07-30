@@ -1,5 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+#include "Enemy/Enemy.h"
 #include "Enemy/EnemyAnimInstance.h"
 
 void UEnemyAnimInstance::NativeInitializeAnimation()

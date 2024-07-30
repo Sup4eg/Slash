@@ -53,9 +53,19 @@ void ABaseCharacter::SendHit_Implementation(const FVector& ImpactPoint, AActor* 
     ExecuteGetEnemyHit(DamagedActor, ImpactPoint);
 }
 
-void ABaseCharacter::Die() {}
+void ABaseCharacter::Die()
+{
+    Tags.Add("Dead");
+    PlayDeathMontage();
+}
 
-void ABaseCharacter::Attack() {}
+void ABaseCharacter::Attack()
+{
+    if (CombatTarget.IsValid() && CombatTarget->ActorHasTag("Dead"))
+    {
+        CombatTarget = nullptr;
+    }
+}
 
 bool ABaseCharacter::CanAttack() const
 {
@@ -78,6 +88,11 @@ void ABaseCharacter::HandleDamage(float DamageAmount)
 bool ABaseCharacter::IsAlive() const
 {
     return AttributeComponent && AttributeComponent->IsAlive();
+}
+
+void ABaseCharacter::DisableMeshCollision()
+{
+    GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 FVector ABaseCharacter::GetTranslationWarpTarget() const
@@ -104,12 +119,6 @@ int32 ABaseCharacter::PlayAttackMontage()
     if (!LastEquippedWeapon) return -1;
     UAnimMontage* AttackMontage = GetAttackMontage(LastEquippedWeapon->GetWeaponType());
     return PlayMontageSection(AttackMontage);
-}
-
-int32 ABaseCharacter::PlayDeathMontage()
-{
-    UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
-    return PlayMontageSection(DeathMontage);
 }
 
 void ABaseCharacter::PlayHitReactMontage(const FName& SectionName)
@@ -222,6 +231,17 @@ int32 ABaseCharacter::PlayMontageSection(UAnimMontage* Montage)
         return SectionNameIndex;
     }
     return -1;
+}
+
+int32 ABaseCharacter::PlayDeathMontage()
+{
+    const int32 Selection = PlayMontageSection(DeathMontage);
+    TEnumAsByte<EDeathPose> Pose(Selection);
+    if (Pose >= EDeathPose::EDP_Death1 && Pose < EDeathPose::EDP_MAX)
+    {
+        DeathPose = Pose;
+    }
+    return Selection;
 }
 
 int32 ABaseCharacter::GetRandomMontageSection(UAnimMontage* Montage)

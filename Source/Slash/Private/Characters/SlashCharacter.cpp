@@ -16,8 +16,11 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SphereComponent.h"
+#include "Components/AttributeComponent.h"
 #include "MotionWarpingComponent.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "SlashHUD.h"
+#include "SlashOverlay.h"
 #include "Enemy.h"
 
 ASlashCharacter::ASlashCharacter()
@@ -66,6 +69,16 @@ void ASlashCharacter::Tick(float DeltaTime)
     UpdateMotionWarpingComponent();
 }
 
+float ASlashCharacter::TakeDamage(float DamageAmount,  //
+    struct FDamageEvent const& DamageEvent,            //
+    class AController* EventInstigator,                //
+    AActor* DamageCauser)
+{
+    HandleDamage(DamageAmount);
+    SetHUDHealth();
+    return DamageAmount;
+}
+
 void ASlashCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -87,7 +100,10 @@ void ASlashCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* 
 {
     Super::GetHit_Implementation(ImpactPoint, Hitter);
     SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
-    ActionState = EActionState::EAS_HitReaction;
+    if (AttributeComponent && AttributeComponent->IsAlive())
+    {
+        ActionState = EActionState::EAS_HitReaction;
+    }
 }
 
 void ASlashCharacter::BeginPlay()
@@ -97,6 +113,7 @@ void ASlashCharacter::BeginPlay()
     VisibilitySphere->OnComponentBeginOverlap.AddDynamic(this, &ASlashCharacter::EnemySeen);
     VisibilitySphere->OnComponentEndOverlap.AddDynamic(this, &ASlashCharacter::EnemyUnSeen);
     Tags.Add("EngageableTarget");
+    InitializeSlashOverlay();
 }
 
 void ASlashCharacter::Attack()
@@ -111,7 +128,7 @@ void ASlashCharacter::Attack()
 
 bool ASlashCharacter::CanAttack() const
 {
-    return ActionState == EActionState::EAS_Unoccupied  //
+    return IsUnoccupied()  //
            && CharacterState != ECharacterState::ECS_Unequipped;
 }
 
@@ -145,6 +162,13 @@ void ASlashCharacter::PlayEquipMontage(const FName& SectionName)
         AnimInstance->Montage_Play(EquipMontage);
         AnimInstance->Montage_JumpToSection(SectionName);
     }
+}
+
+void ASlashCharacter::Die()
+{
+    Super::Die();
+    ActionState = EActionState::EAS_Dead;
+    DisableMeshCollision();
 }
 
 void ASlashCharacter::AttachWeaponToBack()
@@ -209,8 +233,7 @@ void ASlashCharacter::Look(const FInputActionValue& Value)
 
 void ASlashCharacter::Jump()
 {
-    if (ActionState != EActionState::EAS_Unoccupied) return;
-    Super::Jump();
+    if (IsUnoccupied()) Super::Jump();
 }
 
 void ASlashCharacter::Focus()
@@ -272,6 +295,33 @@ void ASlashCharacter::Key2Pressed()
     }
 }
 
+void ASlashCharacter::InitializeSlashOverlay()
+{
+    APlayerController* PlayerController = Cast<APlayerController>(GetController());
+    if (PlayerController)
+    {
+        if (ASlashHUD* SlashHUD = Cast<ASlashHUD>(PlayerController->GetHUD()))
+        {
+            SlashOverlay = SlashHUD->GetSlashOverlay();
+            if (SlashOverlay && AttributeComponent)
+            {
+                SlashOverlay->SetHealthPercent(AttributeComponent->GetHealthPercent());
+                SlashOverlay->SetStaminaPercent(1.f);
+                SlashOverlay->SetGold(0);
+                SlashOverlay->SetSouls(0);
+            }
+        }
+    }
+}
+
+void ASlashCharacter::SetHUDHealth()
+{
+    if (SlashOverlay)
+    {
+        SlashOverlay->SetHealthPercent(AttributeComponent->GetHealthPercent());
+    }
+}
+
 ECharacterState ASlashCharacter::GetCharacterStateByWeaponType(EWeaponType WeaponType) const
 {
     switch (WeaponType)
@@ -289,13 +339,13 @@ bool ASlashCharacter::CanEquip(AWeapon* OverlappingWeapon) const
 
 bool ASlashCharacter::CanDisarm() const
 {
-    return ActionState == EActionState::EAS_Unoccupied  //
+    return IsUnoccupied()  //
            && CharacterState != ECharacterState::ECS_Unequipped;
 }
 
 bool ASlashCharacter::CanArm() const
 {
-    return ActionState == EActionState::EAS_Unoccupied           //
+    return IsUnoccupied()                                        //
            && CharacterState == ECharacterState::ECS_Unequipped  //
            && LastEquippedWeapon;
 }
@@ -393,6 +443,11 @@ bool ASlashCharacter::IsEnemyVisible(AEnemy* Enemy)
     UKismetSystemLibrary::LineTraceSingle(this, GetActorLocation(), Enemy->GetActorLocation(), ETraceTypeQuery::TraceTypeQuery1, false,
         TArray<AActor*>{this}, EDrawDebugTrace::None, OutHitResult, true);
     return OutHitResult.GetActor() == Enemy;
+}
+
+bool ASlashCharacter::IsUnoccupied() const
+{
+    return ActionState == EActionState::EAS_Unoccupied;
 }
 
 void ASlashCharacter::EnemySeen(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,

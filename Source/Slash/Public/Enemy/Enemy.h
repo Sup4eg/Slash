@@ -4,7 +4,6 @@
 
 #include "Characters/BaseCharacter.h"
 #include "Characters/CharacterTypes.h"
-#include "EnemyTypes.h"
 #include "Enemy.generated.h"
 
 class UHealthBarWidgetComponent;
@@ -49,12 +48,8 @@ protected:
     virtual bool CanAttack() const override;
     virtual void AttackEnd() override;
     virtual void HandleDamage(float DamageAmount) override;
-    virtual int32 PlayDeathMontage() override;
     virtual void UpdateMotionWarpingComponent() override;
     /** </ABaseCharacter> */
-
-    UPROPERTY(BluePrintReadOnly)
-    TEnumAsByte<EDeathPose> DeathPose;
 
     UPROPERTY(BlueprintReadOnly)
     EEnemyState EnemyState = EEnemyState::EES_Patrolling;

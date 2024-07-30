@@ -7,15 +7,16 @@
 #include "WeaponTypes.h"
 #include "SlashCharacter.generated.h"
 
+struct FInputActionValue;
 class UInputMappingContext;
 class UInputAction;
-struct FInputActionValue;
 class UCameraComponent;
 class USpringArmComponent;
 class UGroomComponent;
 class AItem;
 class USphereComponent;
 class AEnemy;
+class USlashOverlay;
 
 UCLASS()
 class SLASH_API ASlashCharacter : public ABaseCharacter
@@ -26,6 +27,11 @@ public:
     ASlashCharacter();
 
     virtual void Tick(float DeltaTime) override;
+
+    virtual float TakeDamage(float DamageAmount,  //
+        struct FDamageEvent const& DamageEvent,   //
+        class AController* EventInstigator,       //
+        AActor* DamageCauser) override;
 
     virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
@@ -46,6 +52,7 @@ protected:
     /** </ABaseCharacter> */
 
     void PlayEquipMontage(const FName& SectionName);
+    virtual void Die();
 
     UFUNCTION(BlueprintCallable)
     void AttachWeaponToBack();
@@ -99,6 +106,8 @@ protected:
     UInputAction* FocusAction;
 
 private:
+    void InitializeSlashOverlay();
+    void SetHUDHealth();
     ECharacterState GetCharacterStateByWeaponType(EWeaponType WeaponType) const;
     bool CanEquip(AWeapon* OverlappingWeapon) const;
     bool CanDisarm() const;
@@ -112,6 +121,7 @@ private:
     void FocusOff();
     AEnemy* GetNearestVisibleEnemy();
     bool IsEnemyVisible(AEnemy* Enemy);
+    bool IsUnoccupied() const;
 
     UFUNCTION()
     virtual void EnemySeen(UPrimitiveComponent* OverlappedComponent,  //
@@ -165,7 +175,11 @@ private:
     UPROPERTY(VisibleInstanceOnly)
     TWeakObjectPtr<AEnemy> CombatEnemy;
 
+    UPROPERTY()
+    USlashOverlay* SlashOverlay;
+
 public:
     FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
     FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
+    FORCEINLINE EActionState GetActionState() const { return ActionState; }
 };
