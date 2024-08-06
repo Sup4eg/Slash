@@ -4,20 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Items/Item.h"
-#include "Treasure.generated.h"
-
-class USoundBase;
-class USceneComponent;
+#include "Healing.generated.h"
 
 UCLASS()
-class SLASH_API ATreasure : public AItem
+class SLASH_API AHealing : public AItem
 {
     GENERATED_BODY()
-
-public:
-    ATreasure();
-
-    virtual void Tick(float DeltaTime) override;
 
 protected:
     virtual void OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent,  //
@@ -28,12 +20,9 @@ protected:
         const FHitResult& SweepResult) override;
 
 private:
-    UPROPERTY(VisibleAnywhere)
-    USceneComponent* SceneComponent;
-
-    UPROPERTY(EditAnywhere, Category = "Treasure Properties", meta = (ClampMin = 1))
-    int32 Gold = 1;
+    UPROPERTY(EditAnywhere, Category = "Heal Properties", meta = (ClampMin = 1))
+    int32 Health = 25;
 
 public:
-    FORCEINLINE int32 GetGold() const { return Gold; }
+    FORCEINLINE int32 GetHealthAmount() const { return Health; }
 };

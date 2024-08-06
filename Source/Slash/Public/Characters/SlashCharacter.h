@@ -5,6 +5,7 @@
 #include "BaseCharacter.h"
 #include "CharacterTypes.h"
 #include "WeaponTypes.h"
+#include "Interfaces/PickupInterface.h"
 #include "SlashCharacter.generated.h"
 
 struct FInputActionValue;
@@ -14,12 +15,15 @@ class UCameraComponent;
 class USpringArmComponent;
 class UGroomComponent;
 class AItem;
+class ASoul;
+class ATreasure;
+class AHealing;
 class USphereComponent;
 class AEnemy;
 class USlashOverlay;
 
 UCLASS()
-class SLASH_API ASlashCharacter : public ABaseCharacter
+class SLASH_API ASlashCharacter : public ABaseCharacter, public IPickupInterface
 {
     GENERATED_BODY()
 
@@ -39,6 +43,13 @@ public:
     virtual void GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter) override;
     /** </HitInterface> */
 
+    /** <PickupInterface> */
+    virtual void SetOverlappingItem(AItem* Item) override;
+    virtual void AddSouls(ASoul* Souls) override;
+    virtual void AddGold(ATreasure* Treasure) override;
+    virtual bool AddHealth(AHealing* Healing) override;
+    /** </PickupInterface> */
+
 protected:
     /** <AActor> */
     virtual void BeginPlay() override;
@@ -48,6 +59,7 @@ protected:
     virtual void Attack() override;
     virtual bool CanAttack() const override;
     virtual void AttackEnd() override;
+    virtual void DodgeEnd() override;
     virtual void UpdateMotionWarpingComponent() override;
     /** </ABaseCharacter> */
 
@@ -74,6 +86,7 @@ protected:
     void Look(const FInputActionValue& Value);
     void Jump();
     void Focus();
+    void Dodge();
     void EKeyPressed();
     void Key1Pressed();
     void Key2Pressed();
@@ -105,6 +118,9 @@ protected:
     UPROPERTY(EditAnywhere, Category = "Input")
     UInputAction* FocusAction;
 
+    UPROPERTY(EditAnywhere, Category = "Input")
+    UInputAction* DodgeAction;
+
 private:
     void InitializeSlashOverlay();
     void SetHUDHealth();
@@ -122,6 +138,9 @@ private:
     AEnemy* GetNearestVisibleEnemy();
     bool IsEnemyVisible(AEnemy* Enemy);
     bool IsUnoccupied() const;
+    bool IsOccupied() const;
+    bool HasEnoughStamina() const;
+    bool IsNeedToHeal() const;
 
     UFUNCTION()
     virtual void EnemySeen(UPrimitiveComponent* OverlappedComponent,  //
@@ -179,7 +198,6 @@ private:
     USlashOverlay* SlashOverlay;
 
 public:
-    FORCEINLINE void SetOverlappingItem(AItem* Item) { OverlappingItem = Item; }
     FORCEINLINE ECharacterState GetCharacterState() const { return CharacterState; }
     FORCEINLINE EActionState GetActionState() const { return ActionState; }
 };

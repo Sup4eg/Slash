@@ -47,10 +47,15 @@ protected:
     UFUNCTION(BlueprintCallable)
     virtual void AttackEnd();
 
+    UFUNCTION(BlueprintCallable)
+    virtual void DodgeEnd();
+
     // Montages
     virtual int32 PlayAttackMontage();
     void PlayHitReactMontage(const FName& SectionName);
     void StopAttackMontage();
+    void PlayDodgeMontage();
+
     // VFX
     void PlayHitSound(const FVector& ImpactPoint);
     void PlayDeathSound(const FVector& ActorLocation);
@@ -109,6 +114,9 @@ private:
     // Montages
     UPROPERTY(EditDefaultsOnly, Category = "Montages")
     UAnimMontage* DeathMontage;
+
+    UPROPERTY(EditDefaultsOnly, Category = "Montages")
+    UAnimMontage* DodgeMontage;
 
     UPROPERTY(EditDefaultsOnly, Category = "Montages")
     UAnimMontage* HitReactMontage;

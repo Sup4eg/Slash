@@ -1,9 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Items/Treasure.h"
-#include "Characters/SlashCharacter.h"
-#include "Kismet/GameplayStatics.h"
 #include "Components/StaticMeshComponent.h"
+#include "Interfaces/PickupInterface.h"
 #include "Components/SphereComponent.h"
 
 ATreasure::ATreasure()
@@ -26,10 +25,13 @@ void ATreasure::OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent,  
     bool bFromSweep,                                                            //
     const FHitResult& SweepResult)
 {
-    ASlashCharacter* SlashCharacter = Cast<ASlashCharacter>(OtherActor);
-    if (!SlashCharacter || !PickupSound) return;
-    UGameplayStatics::PlaySoundAtLocation(this, PickupSound, GetActorLocation());
-    Destroy();
+    IPickupInterface* PickupInterface = Cast<IPickupInterface>(OtherActor);
+    if (PickupInterface)
+    {
+        PickupInterface->AddGold(this);
+        SpawnPickupSound();
+        Destroy();
+    }
 }
 
 void ATreasure::Tick(float DeltaTime)

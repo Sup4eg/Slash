@@ -15,8 +15,9 @@
 #include "Items/Weapons/Weapon.h"
 #include "SlashCharacter.h"
 #include "MotionWarpingComponent.h"
-#include "Enemy.h"
 #include "NiagaraComponent.h"
+#include "Items/Soul.h"
+#include "Enemy.h"
 
 AEnemy::AEnemy()
 {
@@ -117,8 +118,8 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
 void AEnemy::BeginPlay()
 {
     Super::BeginPlay();
-    DeactivateFocusEffect();
     check(GetWorld());
+    DeactivateFocusEffect();
     Initialize();
     Tags.Add("Enemy");
 
@@ -139,6 +140,7 @@ void AEnemy::Die()
     SetLifeSpan(DeathLifeSpan);
     PlayDeathSound(GetActorLocation());
     SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
+    SpawnSoul();
 }
 
 void AEnemy::Attack()
@@ -351,6 +353,17 @@ void AEnemy::SpawnDefaultWeapon()
     {
         LastEquippedWeapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass);
         LastEquippedWeapon->Equip(GetMesh(), LastEquippedWeapon->ArmSocketName, this, this);
+    }
+}
+
+void AEnemy::SpawnSoul()
+{
+    if (!AttributeComponent) return;
+    const FVector SpawnLocation = GetActorLocation() + FVector(0.f, 0.f, SoulSpawnHeight);
+    ASoul* SpawnedSoul = GetWorld()->SpawnActor<ASoul>(SoulClass, SpawnLocation, GetActorRotation());
+    if (SpawnedSoul)
+    {
+        SpawnedSoul->SetSouls(AttributeComponent->GetSouls());
     }
 }
 

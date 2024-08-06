@@ -9,6 +9,7 @@
 class UHealthBarWidgetComponent;
 class AAIController;
 class UNiagaraComponent;
+class ASoul;
 
 UCLASS()
 class SLASH_API AEnemy : public ABaseCharacter
@@ -80,6 +81,7 @@ private:
     void MoveToTarget(TWeakObjectPtr<AActor>& TargetActor);
     AActor* ChoosePatrolTarget();
     void SpawnDefaultWeapon();
+    void SpawnSoul();
 
     UFUNCTION()
     virtual void PawnSeen(APawn* SeenPawn);  // Callback for OnPawnSeend in UPawnSensingComponent
@@ -138,6 +140,12 @@ private:
 
     UPROPERTY(EditAnywhere, Category = "Combat")
     float DeathLifeSpan = 8.f;
+
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    TSubclassOf<ASoul> SoulClass;
+
+    UPROPERTY(EditAnywhere, Category = "Item properties", meta = (ClampMin = 0.f))
+    float SoulSpawnHeight = 20.f;
 
 public:
     FORCEINLINE EDeathPose GetDeathPose() const { return DeathPose; }

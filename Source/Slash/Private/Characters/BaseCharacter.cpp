@@ -114,11 +114,19 @@ FVector ABaseCharacter::GetRotationWarpTarget() const
 
 void ABaseCharacter::AttackEnd() {}
 
+void ABaseCharacter::DodgeEnd() {}
+
 int32 ABaseCharacter::PlayAttackMontage()
 {
     if (!LastEquippedWeapon) return -1;
     UAnimMontage* AttackMontage = GetAttackMontage(LastEquippedWeapon->GetWeaponType());
     return PlayMontageSection(AttackMontage);
+}
+
+void ABaseCharacter::PlayDodgeMontage()
+{
+    if (!DodgeMontage) return;
+    PlayMontageSection(DodgeMontage);
 }
 
 void ABaseCharacter::PlayHitReactMontage(const FName& SectionName)

@@ -13,6 +13,7 @@ public class Slash : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[] { });
 
 		PublicIncludePaths.AddRange(new string[] {
+			"Slash/Public/Items",
 			"Slash/Public/Items/Weapons",
 			"Slash/Public/Items/Pawns",
 			"Slash/Public/Characters",

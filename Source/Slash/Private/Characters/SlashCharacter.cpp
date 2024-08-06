@@ -11,6 +11,9 @@
 #include "GroomComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Items/Item.h"
+#include "Items/Soul.h"
+#include "Items/Treasure.h"
+#include "Items/Healing.h"
 #include "Items/Weapons/Weapon.h"
 #include "Animation/AnimInstance.h"
 #include "Components/CapsuleComponent.h"
@@ -67,6 +70,11 @@ void ASlashCharacter::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
     UpdateMotionWarpingComponent();
+    if (AttributeComponent && SlashOverlay)
+    {
+        AttributeComponent->RegenStamina(DeltaTime);
+        SlashOverlay->SetStaminaPercent(AttributeComponent->GetStaminaPercent());
+    }
 }
 
 float ASlashCharacter::TakeDamage(float DamageAmount,  //
@@ -93,6 +101,7 @@ void ASlashCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComp
         EnhancedInputComponent->BindAction(EquipTwoHandedWeaponAction, ETriggerEvent::Started, this, &ASlashCharacter::Key2Pressed);
         EnhancedInputComponent->BindAction(AttackAction, ETriggerEvent::Started, this, &ASlashCharacter::Attack);
         EnhancedInputComponent->BindAction(FocusAction, ETriggerEvent::Started, this, &ASlashCharacter::Focus);
+        EnhancedInputComponent->BindAction(DodgeAction, ETriggerEvent::Started, this, &ASlashCharacter::Dodge);
     }
 }
 
@@ -104,6 +113,40 @@ void ASlashCharacter::GetHit_Implementation(const FVector& ImpactPoint, AActor* 
     {
         ActionState = EActionState::EAS_HitReaction;
     }
+}
+
+void ASlashCharacter::SetOverlappingItem(AItem* Item)
+{
+    OverlappingItem = Item;
+}
+
+void ASlashCharacter::AddSouls(ASoul* Souls)
+{
+    if (AttributeComponent && SlashOverlay)
+    {
+        AttributeComponent->AddSouls(Souls->GetSouls());
+        SlashOverlay->SetSouls(AttributeComponent->GetSouls());
+    }
+}
+
+void ASlashCharacter::AddGold(ATreasure* Treasure)
+{
+    if (AttributeComponent && SlashOverlay)
+    {
+        AttributeComponent->AddGold(Treasure->GetGold());
+        SlashOverlay->SetGold(AttributeComponent->GetGold());
+    }
+}
+
+bool ASlashCharacter::AddHealth(AHealing* Healing)
+{
+    if (AttributeComponent && SlashOverlay && IsNeedToHeal())
+    {
+        AttributeComponent->AddHealth(Healing->GetHealthAmount());
+        SlashOverlay->SetHealthPercent(AttributeComponent->GetHealthPercent());
+        return true;
+    }
+    return false;
 }
 
 void ASlashCharacter::BeginPlay()
@@ -134,6 +177,13 @@ bool ASlashCharacter::CanAttack() const
 
 void ASlashCharacter::AttackEnd()
 {
+    Super::AttackEnd();
+    ActionState = EActionState::EAS_Unoccupied;
+}
+
+void ASlashCharacter::DodgeEnd()
+{
+    Super::DodgeEnd();
     ActionState = EActionState::EAS_Unoccupied;
 }
 
@@ -249,6 +299,15 @@ void ASlashCharacter::Focus()
     {
         FocusOff();
     }
+}
+
+void ASlashCharacter::Dodge()
+{
+    if (IsOccupied() || !HasEnoughStamina() || !SlashOverlay) return;
+    Super::PlayDodgeMontage();
+    ActionState = EActionState::EAS_Dodge;
+    AttributeComponent->UseStamina(AttributeComponent->GetDodgeCost());
+    SlashOverlay->SetStaminaPercent(AttributeComponent->GetStaminaPercent());
 }
 
 void ASlashCharacter::EKeyPressed()
@@ -448,6 +507,21 @@ bool ASlashCharacter::IsEnemyVisible(AEnemy* Enemy)
 bool ASlashCharacter::IsUnoccupied() const
 {
     return ActionState == EActionState::EAS_Unoccupied;
+}
+
+bool ASlashCharacter::IsOccupied() const
+{
+    return ActionState != EActionState::EAS_Unoccupied;
+}
+
+bool ASlashCharacter::HasEnoughStamina() const
+{
+    return AttributeComponent && AttributeComponent->GetStamina() > AttributeComponent->GetDodgeCost();
+}
+
+bool ASlashCharacter::IsNeedToHeal() const
+{
+    return AttributeComponent && AttributeComponent->GetHealth() < AttributeComponent->GetMaxHealth();
 }
 
 void ASlashCharacter::EnemySeen(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp,

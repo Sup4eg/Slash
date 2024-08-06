@@ -9,6 +9,8 @@
 class USphereComponent;
 class UStaticMeshComponent;
 class UNiagaraComponent;
+class UNiagaraSystem;
+class USoundBase;
 
 enum class EItemState : uint8
 {
@@ -43,6 +45,9 @@ protected:
         UPrimitiveComponent* OtherComp,                                        //
         int32 OtherBodyIndex);
 
+    void SpawnPickupSystem();
+    void SpawnPickupSound();
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
     UStaticMeshComponent* Mesh;
 
@@ -52,9 +57,15 @@ protected:
     EItemState ItemState = EItemState::EIS_Hovering;
 
     UPROPERTY(EditAnywhere, Category = "VFX")
-    UNiagaraComponent* EmbersEffect;
+    UNiagaraComponent* ItemEffect;
 
 private:
+    UPROPERTY(EditAnywhere, Category = "VFX")
+    UNiagaraSystem* PickupEffect;
+
+    UPROPERTY(EditAnywhere, Category = "Sound")
+    USoundBase* PickupSound;
+
     UPROPERTY(EditAnywhere, Category = "Sine Parameters")
     float Amplitude = 0.25f;
 

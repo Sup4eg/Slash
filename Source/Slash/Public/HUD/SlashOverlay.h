@@ -13,10 +13,10 @@ class SLASH_API USlashOverlay : public UUserWidget
     GENERATED_BODY()
 
 public:
-	void SetHealthPercent(float Percent);
-	void SetStaminaPercent(float Percent);
-	void SetGold(int32 Amount);
-	void SetSouls(int32 Amount);
+    void SetHealthPercent(float Percent);
+    void SetStaminaPercent(float Percent);
+    void SetGold(int32 Amount);
+    void SetSouls(int32 Amount);
 
 private:
     UPROPERTY(meta = (BindWidget))
