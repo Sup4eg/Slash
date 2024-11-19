@@ -214,11 +214,12 @@ void ASlashCharacter::PlayEquipMontage(const FName& SectionName)
     }
 }
 
-void ASlashCharacter::Die()
+void ASlashCharacter::Die_Implementation()
 {
-    Super::Die();
+    Super::Die_Implementation();
     ActionState = EActionState::EAS_Dead;
     DisableMeshCollision();
+    FocusOff();
 }
 
 void ASlashCharacter::AttachWeaponToBack()
@@ -233,7 +234,7 @@ void ASlashCharacter::AttachWeaponToHand()
 {
     if (LastEquippedWeapon)
     {
-        LastEquippedWeapon->AttachMeshToSocket(GetMesh(), LastEquippedWeapon->ArmSocketName);
+        LastEquippedWeapon->AttachMeshToSocket(GetMesh(), LastEquippedWeapon->WeaponSocketName);
     }
 }
 
@@ -288,6 +289,7 @@ void ASlashCharacter::Jump()
 
 void ASlashCharacter::Focus()
 {
+    if (!AttributeComponent || !AttributeComponent->IsAlive()) return;
     AEnemy* TargetEnemy = GetNearestVisibleEnemy();
     if (!TargetEnemy) return;
 
@@ -428,7 +430,7 @@ void ASlashCharacter::Arm()
 
 void ASlashCharacter::EquipWeapon(AWeapon* OverlappingWeapon)
 {
-    OverlappingWeapon->Equip(GetMesh(), OverlappingWeapon->ArmSocketName, this, this);
+    OverlappingWeapon->Equip(GetMesh(), OverlappingWeapon->WeaponSocketName, this, this);
     CharacterState = GetCharacterStateByWeaponType(OverlappingWeapon->GetWeaponType());
     OverlappingItem = nullptr;
     LastEquippedWeapon = OverlappingWeapon;

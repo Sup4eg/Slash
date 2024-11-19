@@ -64,7 +64,7 @@ protected:
     /** </ABaseCharacter> */
 
     void PlayEquipMontage(const FName& SectionName);
-    virtual void Die();
+    virtual void Die_Implementation() override;
 
     UFUNCTION(BlueprintCallable)
     void AttachWeaponToBack();

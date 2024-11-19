@@ -16,7 +16,7 @@
 
 AWeapon::AWeapon()
 {
-    PrimaryActorTick.bCanEverTick = false;
+    PrimaryActorTick.bCanEverTick = true;
 
     WeaponBox = CreateDefaultSubobject<UBoxComponent>("WeaponBox");
     WeaponBox->SetupAttachment(GetRootComponent());
@@ -33,29 +33,6 @@ AWeapon::AWeapon()
 void AWeapon::Tick(float DeltaTime)
 {
     Super::Tick(DeltaTime);
-
-    /*
-        Debug purposes
-    */
-
-    // const FVector Start = BoxTraceStart->GetComponentLocation();
-    // const FVector End = BoxTraceEnd->GetComponentLocation();
-
-    // TArray<AActor*> ActorsToIgnore;
-    // ActorsToIgnore.Add(this);
-    // FHitResult OutBoxHit;
-    // UKismetSystemLibrary::BoxTraceSingle(this,  //
-    //     Start,                                  //
-    //     End,                                    //
-    //     FVector(BoxTraceCoord),                 //
-    //     BoxTraceStart->GetComponentRotation(),  //
-    //     ETraceTypeQuery::TraceTypeQuery1,       //
-    //     false,                                  //
-    //     ActorsToIgnore,                         //
-    //     EDrawDebugTrace::ForOneFrame,           //
-    //     OutBoxHit,                              //
-    //     true                                    //
-    // );
 }
 
 void AWeapon::Equip(USceneComponent* InParent, FName InSocketName, AActor* NewOwner, APawn* NewInstigator)
@@ -130,8 +107,8 @@ void AWeapon::BoxTrace(FHitResult& OutBoxHit)
     const FVector End = BoxTraceEnd->GetComponentLocation();
 
     TArray<AActor*> ActorsToIgnore;
-    IgnoredActors.Add(this);
-    IgnoredActors.Add(GetOwner());
+    IgnoredActors.AddUnique(this);
+    IgnoredActors.AddUnique(GetOwner());
 
     for (AActor* Actor : IgnoredActors)
     {
@@ -150,6 +127,7 @@ void AWeapon::BoxTrace(FHitResult& OutBoxHit)
         OutBoxHit,                                                             //
         true                                                                   //
     );
+
     IgnoredActors.AddUnique(OutBoxHit.GetActor());
 }
 

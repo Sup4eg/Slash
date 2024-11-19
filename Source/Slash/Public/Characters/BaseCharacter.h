@@ -34,7 +34,9 @@ protected:
     virtual void SendHit_Implementation(const FVector& ImpactPoint, AActor* DamagedActor, float BaseDamage, AActor* DamageCauser) override;
 
     // Combat
-    virtual void Die();
+    UFUNCTION(BlueprintNativeEvent)
+    void Die();
+
     virtual void Attack();
     virtual bool CanAttack() const;
     void DirectionalHitReact(const FVector& ImpactPoint);

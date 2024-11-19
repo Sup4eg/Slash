@@ -44,7 +44,7 @@ protected:
     /** </AActor> */
 
     /** <ABaseCharacter> */
-    virtual void Die() override;
+    virtual void Die_Implementation() override;
     virtual void Attack() override;
     virtual bool CanAttack() const override;
     virtual void AttackEnd() override;
@@ -52,7 +52,7 @@ protected:
     virtual void UpdateMotionWarpingComponent() override;
     /** </ABaseCharacter> */
 
-    UPROPERTY(BlueprintReadOnly)
+    UPROPERTY(BlueprintReadOnly, VisibleAnywhere)
     EEnemyState EnemyState = EEnemyState::EES_Patrolling;
 
 private:
@@ -95,14 +95,17 @@ private:
     UPROPERTY(VisibleAnywhere)
     UPawnSensingComponent* PawnSensingComponent;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "Combat")
     TSubclassOf<AWeapon> WeaponClass;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "Combat")
     double CombatRadius = 1000.0;
 
-    UPROPERTY(EditAnywhere)
+    UPROPERTY(EditAnywhere, Category = "Combat")
     double AttackRadius = 120.f;
+
+    UPROPERTY(EditAnywhere, Category = "Combat")
+    double AcceptanceRadius = 20.f;
 
     UPROPERTY(EditAnywhere)
     double PatrolRadius = 200.f;
@@ -145,7 +148,7 @@ private:
     TSubclassOf<ASoul> SoulClass;
 
     UPROPERTY(EditAnywhere, Category = "Item properties", meta = (ClampMin = 0.f))
-    float SoulSpawnHeight = 20.f;
+    float SoulSpawnHeight = 125.f;
 
 public:
     FORCEINLINE EDeathPose GetDeathPose() const { return DeathPose; }

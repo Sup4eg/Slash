@@ -11,7 +11,12 @@ class SLASH_API ASoul : public AItem
 {
     GENERATED_BODY()
 
+public:
+    virtual void Tick(float DeltaTime) override;
+
 protected:
+    virtual void BeginPlay() override;
+
     virtual void OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent,  //
         AActor* OtherActor,                                                      //
         UPrimitiveComponent* OtherComp,                                          //
@@ -22,6 +27,11 @@ protected:
 private:
     UPROPERTY(EditAnywhere, Category = "Soul Properties", meta = (ClampMin = 1))
     int32 Souls = 1;
+
+    UPROPERTY(EditAnywhere)
+    float DriftRate = -15.f;
+
+    double DesiredZ;
 
 public:
     FORCEINLINE int32 GetSouls() const { return Souls; }

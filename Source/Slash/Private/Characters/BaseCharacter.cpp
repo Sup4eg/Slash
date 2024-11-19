@@ -53,7 +53,7 @@ void ABaseCharacter::SendHit_Implementation(const FVector& ImpactPoint, AActor* 
     ExecuteGetEnemyHit(DamagedActor, ImpactPoint);
 }
 
-void ABaseCharacter::Die()
+void ABaseCharacter::Die_Implementation()
 {
     Tags.Add("Dead");
     PlayDeathMontage();

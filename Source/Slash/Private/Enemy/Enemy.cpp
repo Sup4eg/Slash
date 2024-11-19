@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Animation/AnimInstance.h"
 #include "Engine/Engine.h"
 #include "HUD/HealthBarWidgetComponent.h"
@@ -113,6 +114,10 @@ void AEnemy::GetHit_Implementation(const FVector& ImpactPoint, AActor* Hitter)
     ClearAttackTimer();
     SetWeaponCollisionEnabled(ECollisionEnabled::NoCollision);
     StopAttackMontage();
+    if (IsInsideAttackRadius())
+    {
+        if (!IsDead()) StartAttackTimer();
+    }
 }
 
 void AEnemy::BeginPlay()
@@ -129,9 +134,9 @@ void AEnemy::BeginPlay()
     }
 }
 
-void AEnemy::Die()
+void AEnemy::Die_Implementation()
 {
-    Super::Die();
+    Super::Die_Implementation();
 
     HideHealthBar();
     ClearAttackTimer();
@@ -327,7 +332,7 @@ void AEnemy::MoveToTarget(TWeakObjectPtr<AActor>& TargetActor)
     {
         FAIMoveRequest MoveRequest;
         MoveRequest.SetGoalActor(TargetActor.Get());
-        MoveRequest.SetAcceptanceRadius(20.f);
+        MoveRequest.SetAcceptanceRadius(AcceptanceRadius);
         EnemyController->MoveTo(MoveRequest);
     }
 }
@@ -352,7 +357,7 @@ void AEnemy::SpawnDefaultWeapon()
     if (WeaponClass)
     {
         LastEquippedWeapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass);
-        LastEquippedWeapon->Equip(GetMesh(), LastEquippedWeapon->ArmSocketName, this, this);
+        LastEquippedWeapon->Equip(GetMesh(), LastEquippedWeapon->WeaponSocketName, this, this);
     }
 }
 
@@ -364,6 +369,7 @@ void AEnemy::SpawnSoul()
     if (SpawnedSoul)
     {
         SpawnedSoul->SetSouls(AttributeComponent->GetSouls());
+        SpawnedSoul->SetOwner(this);
     }
 }
 

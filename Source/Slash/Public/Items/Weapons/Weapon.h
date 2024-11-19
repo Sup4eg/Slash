@@ -26,7 +26,7 @@ public:
     void AttachMeshToSocket(USceneComponent* InParent, const FName& InSocketName);
 
     UPROPERTY(EditDefaultsOnly, Category = "Weapon properties")
-    FName ArmSocketName = "OneHandedRightArmSocket";
+    FName WeaponSocketName = "OneHandedRightArmSocket";
 
     UPROPERTY(EditDefaultsOnly, Category = "Weapon properties")
     FName SpineSocketName = "OneHandedSpineSocket";
